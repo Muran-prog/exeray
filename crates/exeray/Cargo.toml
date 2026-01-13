@@ -1,0 +1,14 @@
+[package]
+name = "exeray"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "exeray"
+path = "src/main.rs"
+
+[dependencies]
+exeray-ffi = { path = "../exeray-ffi" }
+crossterm.workspace = true
+ratatui.workspace = true
+anyhow.workspace = true
