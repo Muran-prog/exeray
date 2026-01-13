@@ -39,6 +39,7 @@ public:
     void reset() { offset_ = 0; }
     std::size_t used() const { return offset_; }
     std::size_t capacity() const { return capacity_; }
+    const std::uint8_t* base() const { return base_; }
 
 private:
     std::uint8_t* base_;
