@@ -227,6 +227,21 @@ struct WmiPayload {
     uint8_t _pad[2];         ///< Explicit padding
 };
 
+/**
+ * @brief Payload for CLR runtime operations.
+ *
+ * Contains .NET assembly and method info for malware detection.
+ * Used for detecting in-memory assembly loading and obfuscated methods.
+ */
+struct ClrPayload {
+    StringId assembly_name;  ///< Full assembly name (interned)
+    StringId method_name;    ///< Method name for JIT events (interned)
+    uint64_t load_address;   ///< Base load address in process
+    uint8_t is_dynamic;      ///< 1 if loaded from memory (no file!)
+    uint8_t is_suspicious;   ///< 1 if suspicious pattern detected
+    uint8_t _pad[2];         ///< Explicit padding for alignment
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -265,6 +280,7 @@ struct EventPayload {
         SecurityPayload security;   ///< Active when category == Security
         ServicePayload service;     ///< Active when category == Service
         WmiPayload wmi;             ///< Active when category == Wmi
+        ClrPayload clr;             ///< Active when category == Clr
     };
 };
 
@@ -302,6 +318,8 @@ static_assert(sizeof(ServicePayload) == 20,
               "ServicePayload must be 20 bytes");
 static_assert(sizeof(WmiPayload) == 16,
               "WmiPayload must be 16 bytes");
+static_assert(sizeof(ClrPayload) == 24,
+              "ClrPayload must be 24 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -340,6 +358,8 @@ static_assert(std::is_trivially_copyable_v<ServicePayload>,
               "ServicePayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<WmiPayload>,
               "WmiPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ClrPayload>,
+              "ClrPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

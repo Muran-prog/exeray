@@ -79,6 +79,11 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
     etw_session_->enable_provider(etw::providers::DNS_CLIENT, trace_level, all_keywords);
     etw_session_->enable_provider(etw::providers::SECURITY_AUDITING, trace_level, all_keywords);
     etw_session_->enable_provider(etw::providers::WMI_ACTIVITY, trace_level, all_keywords);
+    etw_session_->enable_provider(
+        etw::providers::CLR_RUNTIME,
+        trace_level,
+        etw::providers::clr_keywords::ALL
+    );
 
     // Step 4: Set monitoring flag before starting thread
     monitoring_.store(true, std::memory_order_release);

@@ -181,6 +181,17 @@ ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* 
 /// Detects remote WMI (lateral movement) and suspicious patterns.
 ParsedEvent parse_wmi_event(const EVENT_RECORD* record, event::StringPool* strings);
 
+/// @brief Parse a Microsoft-Windows-DotNETRuntime event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with CLR operation details.
+///
+/// Handles:
+/// - Event ID 152/153: AssemblyLoad → ClrOp::AssemblyLoad
+/// - Event ID 154: AssemblyUnload → ClrOp::AssemblyUnload
+/// - Event ID 155: MethodJit → ClrOp::MethodJit
+/// Detects dynamic assemblies (no file) and suspicious paths.
+ParsedEvent parse_clr_event(const EVENT_RECORD* record, event::StringPool* strings);
+
 }  // namespace exeray::etw
 
 #else  // !_WIN32
@@ -254,6 +265,10 @@ inline ParsedEvent parse_security_event(const EVENT_RECORD* /*record*/, event::S
 }
 
 inline ParsedEvent parse_wmi_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_clr_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 

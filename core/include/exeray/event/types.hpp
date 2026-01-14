@@ -58,6 +58,7 @@ enum class Category : std::uint8_t {
     Security,     ///< Security auditing events (logon, privilege changes)
     Service,      ///< Windows service operations
     Wmi,          ///< WMI operations
+    Clr,          ///< .NET CLR runtime operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -233,6 +234,17 @@ enum class WmiOp : std::uint8_t {
     Connect      ///< Namespace connection
 };
 
+/**
+ * @brief .NET CLR runtime operation types.
+ *
+ * Tracks assembly loading and JIT compilation for in-memory malware detection.
+ */
+enum class ClrOp : std::uint8_t {
+    AssemblyLoad,    ///< Assembly loaded (Event 152/153)
+    AssemblyUnload,  ///< Assembly unloaded (Event 154)
+    MethodJit        ///< Method JIT compiled (Event 155)
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -269,6 +281,7 @@ static_assert(sizeof(DnsOp) == 1, "DnsOp must be 1 byte");
 static_assert(sizeof(SecurityOp) == 1, "SecurityOp must be 1 byte");
 static_assert(sizeof(ServiceOp) == 1, "ServiceOp must be 1 byte");
 static_assert(sizeof(WmiOp) == 1, "WmiOp must be 1 byte");
+static_assert(sizeof(ClrOp) == 1, "ClrOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -304,6 +317,8 @@ static_assert(std::is_trivially_copyable_v<ServiceOp>,
               "ServiceOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<WmiOp>,
               "WmiOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ClrOp>,
+              "ClrOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

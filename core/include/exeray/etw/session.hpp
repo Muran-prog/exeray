@@ -157,6 +157,11 @@ extern const GUID SECURITY_AUDITING;
 /// Traces WMI queries and method executions for attack detection.
 extern const GUID WMI_ACTIVITY;
 
+/// Microsoft-Windows-DotNETRuntime provider
+/// GUID: {E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4}
+/// Traces .NET assembly loading and JIT compilation for malware detection.
+extern const GUID CLR_RUNTIME;
+
 /// PowerShell keywords for event filtering.
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
@@ -164,6 +169,13 @@ namespace powershell_keywords {
     constexpr uint64_t CMDLETS  = 0x40;   ///< Cmdlet invocation
     constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
 }  // namespace powershell_keywords
+
+/// CLR Runtime keywords for event filtering.
+namespace clr_keywords {
+    constexpr uint64_t LOADER = 0x8;   ///< Assembly/Module load events
+    constexpr uint64_t JIT    = 0x10;  ///< JIT compilation events
+    constexpr uint64_t ALL    = LOADER | JIT;
+}  // namespace clr_keywords
 
 }  // namespace providers
 
@@ -242,11 +254,17 @@ extern const GUID AMSI;
 extern const GUID DNS_CLIENT;
 extern const GUID SECURITY_AUDITING;
 extern const GUID WMI_ACTIVITY;
+extern const GUID CLR_RUNTIME;
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;
     constexpr uint64_t PIPELINE = 0x20;
     constexpr uint64_t CMDLETS  = 0x40;
     constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
+}
+namespace clr_keywords {
+    constexpr uint64_t LOADER = 0x8;
+    constexpr uint64_t JIT    = 0x10;
+    constexpr uint64_t ALL    = LOADER | JIT;
 }
 }  // namespace providers
 

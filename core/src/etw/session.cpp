@@ -320,6 +320,13 @@ const GUID WMI_ACTIVITY = {
     {0xBF, 0x7E, 0xD7, 0x4A, 0xB4, 0x7B, 0xBD, 0xAA}
 };
 
+// Microsoft-Windows-DotNETRuntime
+// {E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4}
+const GUID CLR_RUNTIME = {
+    0xE13C0D23, 0xCCBC, 0x4E12,
+    {0x93, 0x1B, 0xD9, 0xCC, 0x2E, 0xEE, 0x27, 0xE4}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -343,6 +350,7 @@ const GUID AMSI = {0, 0, 0, {0}};
 const GUID DNS_CLIENT = {0, 0, 0, {0}};
 const GUID SECURITY_AUDITING = {0, 0, 0, {0}};
 const GUID WMI_ACTIVITY = {0, 0, 0, {0}};
+const GUID CLR_RUNTIME = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 
