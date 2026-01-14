@@ -58,6 +58,31 @@ StringId StringPool::intern(std::string_view str) {
     return id;
 }
 
+StringId StringPool::intern_wide(std::wstring_view wstr) {
+    if (wstr.empty()) {
+        return intern("");
+    }
+
+    // Convert wide string to UTF-8 (simplified - handles ASCII range)
+    // For full Unicode support, use WideCharToMultiByte on Windows
+    std::string utf8;
+    utf8.reserve(wstr.size());
+    for (wchar_t wc : wstr) {
+        if (wc < 0x80) {
+            utf8.push_back(static_cast<char>(wc));
+        } else if (wc < 0x800) {
+            utf8.push_back(static_cast<char>(0xC0 | (wc >> 6)));
+            utf8.push_back(static_cast<char>(0x80 | (wc & 0x3F)));
+        } else {
+            utf8.push_back(static_cast<char>(0xE0 | (wc >> 12)));
+            utf8.push_back(static_cast<char>(0x80 | ((wc >> 6) & 0x3F)));
+            utf8.push_back(static_cast<char>(0x80 | (wc & 0x3F)));
+        }
+    }
+
+    return intern(utf8);
+}
+
 std::string_view StringPool::get(StringId id) const noexcept {
     if (id == INVALID_STRING) {
         return {};

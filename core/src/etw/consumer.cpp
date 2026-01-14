@@ -42,7 +42,7 @@ void WINAPI event_record_callback(PEVENT_RECORD record) {
     }
 
     // Parse the event using the dispatcher
-    auto parsed = dispatch_event(record);
+    auto parsed = dispatch_event(record, ctx->strings);
     if (!parsed.valid) {
         return;
     }

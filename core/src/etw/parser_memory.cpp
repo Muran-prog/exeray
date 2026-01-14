@@ -203,7 +203,7 @@ ParsedEvent parse_virtual_free(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_memory_event(const EVENT_RECORD* record) {
+ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }

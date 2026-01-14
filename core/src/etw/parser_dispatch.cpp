@@ -19,7 +19,7 @@ bool guid_equal(const GUID& a, const GUID& b) {
 
 }  // namespace
 
-ParsedEvent dispatch_event(const EVENT_RECORD* record) {
+ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -28,31 +28,31 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record) {
 
     // Route to appropriate parser based on provider GUID
     if (guid_equal(provider, providers::KERNEL_PROCESS)) {
-        return parse_process_event(record);
+        return parse_process_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_FILE)) {
-        return parse_file_event(record);
+        return parse_file_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_REGISTRY)) {
-        return parse_registry_event(record);
+        return parse_registry_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_NETWORK)) {
-        return parse_network_event(record);
+        return parse_network_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_IMAGE)) {
-        return parse_image_event(record);
+        return parse_image_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_THREAD)) {
-        return parse_thread_event(record);
+        return parse_thread_event(record, strings);
     }
     if (guid_equal(provider, providers::KERNEL_MEMORY)) {
-        return parse_memory_event(record);
+        return parse_memory_event(record, strings);
     }
     if (guid_equal(provider, providers::POWERSHELL)) {
-        return parse_powershell_event(record);
+        return parse_powershell_event(record, strings);
     }
     if (guid_equal(provider, providers::AMSI)) {
-        return parse_amsi_event(record);
+        return parse_amsi_event(record, strings);
     }
 
     // Unknown provider - return invalid

@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/event/string_pool.hpp"
 
 #include <cstring>
 #include <cwchar>
@@ -74,7 +75,7 @@ bool is_suspicious_path(const wchar_t* path, size_t len) {
 ///   DefaultBase: PVOID (8 bytes)
 ///   Reserved1-4: UINT32 * 4 (16 bytes)
 ///   FileName: Unicode string (null-terminated)
-ParsedEvent parse_image_load(const EVENT_RECORD* record) {
+ParsedEvent parse_image_load(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ImageOp::Load);
@@ -139,11 +140,18 @@ ParsedEvent parse_image_load(const EVENT_RECORD* record) {
     size_t filename_len = 0;
     if (offset < len) {
         filename = reinterpret_cast<const wchar_t*>(data + offset);
-        filename_len = (len - offset) / sizeof(wchar_t);
+        size_t max_chars = (len - offset) / sizeof(wchar_t);
+        while (filename_len < max_chars && filename[filename_len] != L'\0') {
+            ++filename_len;
+        }
     }
 
     // Populate payload
-    result.payload.image.image_path = event::INVALID_STRING;  // Would be interned
+    if (strings != nullptr && filename_len > 0) {
+        result.payload.image.image_path = strings->intern_wide({filename, filename_len});
+    } else {
+        result.payload.image.image_path = event::INVALID_STRING;
+    }
     result.payload.image.process_id = process_id;
     result.payload.image.base_address = image_base;
     result.payload.image.size = static_cast<uint32_t>(image_size);
@@ -154,7 +162,7 @@ ParsedEvent parse_image_load(const EVENT_RECORD* record) {
 }
 
 /// @brief Parse Image Unload event (Event ID 2).
-ParsedEvent parse_image_unload(const EVENT_RECORD* record) {
+ParsedEvent parse_image_unload(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ImageOp::Unload);
@@ -216,7 +224,7 @@ ParsedEvent parse_image_unload(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_image_event(const EVENT_RECORD* record) {
+ParsedEvent parse_image_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -225,9 +233,9 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record) {
 
     switch (event_id) {
         case ImageEventId::Load:
-            return parse_image_load(record);
+            return parse_image_load(record, strings);
         case ImageEventId::Unload:
-            return parse_image_unload(record);
+            return parse_image_unload(record, strings);
         default:
             // Unknown event ID - return invalid
             return ParsedEvent{.valid = false};

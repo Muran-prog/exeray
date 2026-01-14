@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/event/string_pool.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -153,7 +154,7 @@ void log_amsi_scan(uint32_t pid, uint32_t result, uint32_t content_size,
 ///   contentName: WSTRING (optional, e.g., script name)
 ///   contentSize: UINT32
 ///   content: WSTRING/BINARY (scanned content, may be truncated)
-ParsedEvent parse_scan_buffer_event(const EVENT_RECORD* record) {
+ParsedEvent parse_scan_buffer_event(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::AmsiOp::Scan);
@@ -205,9 +206,13 @@ ParsedEvent parse_scan_buffer_event(const EVENT_RECORD* record) {
     // Check for bypass attempt
     bool bypass_detected = is_bypass_attempt(content_size, app_name);
 
-    // Set payload
-    result.payload.amsi.content = event::INVALID_STRING;  // TODO: intern content
-    result.payload.amsi.app_name = event::INVALID_STRING; // TODO: intern app_name
+    // Set payload with interned strings
+    result.payload.amsi.content = event::INVALID_STRING;  // Content often binary/large
+    if (strings != nullptr && !app_name.empty()) {
+        result.payload.amsi.app_name = strings->intern_wide(app_name);
+    } else {
+        result.payload.amsi.app_name = event::INVALID_STRING;
+    }
     result.payload.amsi.scan_result = scan_result;
     result.payload.amsi.content_size = content_size;
 
@@ -229,7 +234,7 @@ ParsedEvent parse_scan_buffer_event(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_amsi_event(const EVENT_RECORD* record) {
+ParsedEvent parse_amsi_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -239,7 +244,7 @@ ParsedEvent parse_amsi_event(const EVENT_RECORD* record) {
 
     switch (event_id) {
         case AmsiEventId::ScanBuffer:
-            return parse_scan_buffer_event(record);
+            return parse_scan_buffer_event(record, strings);
         default:
             // Unknown event ID - return invalid
             return ParsedEvent{.valid = false};

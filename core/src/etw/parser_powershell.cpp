@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/event/string_pool.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -174,7 +175,7 @@ std::string wstring_to_string(std::wstring_view wstr) {
 ///   ScriptBlockText: WSTRING (actual script content)
 ///   ScriptBlockId: GUID
 ///   Path: WSTRING (optional script file path)
-ParsedEvent parse_script_block_event(const EVENT_RECORD* record) {
+ParsedEvent parse_script_block_event(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ScriptOp::Execute);
@@ -217,11 +218,12 @@ ParsedEvent parse_script_block_event(const EVENT_RECORD* record) {
         result.payload.script.is_suspicious = 0;
     }
 
-    // Note: script_block and context StringIds would need to be interned
-    // via StringPool. For now, we leave them as INVALID_STRING since
-    // we don't have access to the StringPool in the parser layer.
-    // The consumer layer should handle string interning.
-    result.payload.script.script_block = event::INVALID_STRING;
+    // Intern script block content
+    if (strings != nullptr && !wscript.empty()) {
+        result.payload.script.script_block = strings->intern_wide(wscript);
+    } else {
+        result.payload.script.script_block = event::INVALID_STRING;
+    }
     result.payload.script.context = event::INVALID_STRING;
 
     result.valid = true;
@@ -232,7 +234,7 @@ ParsedEvent parse_script_block_event(const EVENT_RECORD* record) {
 ///
 /// Logs cmdlet and module invocations. Less detailed than Script Block
 /// Logging but still useful for tracking command execution.
-ParsedEvent parse_module_event(const EVENT_RECORD* record) {
+ParsedEvent parse_module_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ScriptOp::Module);
@@ -258,7 +260,7 @@ ParsedEvent parse_module_event(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_powershell_event(const EVENT_RECORD* record) {
+ParsedEvent parse_powershell_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -268,9 +270,9 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record) {
 
     switch (event_id) {
         case PowerShellEventId::ScriptBlockLogging:
-            return parse_script_block_event(record);
+            return parse_script_block_event(record, strings);
         case PowerShellEventId::ModuleLogging:
-            return parse_module_event(record);
+            return parse_module_event(record, strings);
         default:
             // Unknown event ID - return invalid
             return ParsedEvent{.valid = false};

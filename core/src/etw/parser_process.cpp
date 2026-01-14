@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/event/string_pool.hpp"
 
 #include <cstring>
 
@@ -40,7 +41,7 @@ void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
 ///   UserSID: SID (variable)
 ///   ImageFileName: ANSI string (null-terminated)
 ///   CommandLine: Unicode string (null-terminated)
-ParsedEvent parse_process_start(const EVENT_RECORD* record) {
+ParsedEvent parse_process_start(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ProcessOp::Create);
@@ -71,18 +72,64 @@ ParsedEvent parse_process_start(const EVENT_RECORD* record) {
     std::memcpy(&process_id, data + offset, sizeof(uint32_t));
     offset += sizeof(uint32_t);
     std::memcpy(&parent_id, data + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
 
     result.payload.process.pid = process_id;
     result.payload.process.parent_pid = parent_id;
-    result.payload.process.image_path = event::INVALID_STRING;
-    result.payload.process.command_line = event::INVALID_STRING;
+
+    // Skip SessionId, ExitStatus, DirectoryTableBase, Flags
+    offset += sizeof(uint32_t) * 2;  // SessionId, ExitStatus
+    offset += ptr_size;               // DirectoryTableBase
+    offset += sizeof(uint32_t);       // Flags
+
+    // Skip SID (variable length) - look for ANSI string after
+    // SID format: Revision(1) + SubAuthorityCount(1) + Authority(6) + SubAuthorities(4*count)
+    if (offset < len) {
+        uint8_t sub_auth_count = (offset + 1 < len) ? data[offset + 1] : 0;
+        offset += 8 + (4 * sub_auth_count);  // SID header + subauthorities
+    }
+
+    // Extract ImageFileName (ANSI null-terminated)
+    if (offset < len && strings != nullptr) {
+        const char* image_name = reinterpret_cast<const char*>(data + offset);
+        size_t max_len = len - offset;
+        size_t str_len = 0;
+        while (str_len < max_len && image_name[str_len] != '\0') {
+            ++str_len;
+        }
+        if (str_len > 0) {
+            result.payload.process.image_path = strings->intern({image_name, str_len});
+        } else {
+            result.payload.process.image_path = event::INVALID_STRING;
+        }
+        offset += str_len + 1;  // Skip past null terminator
+    } else {
+        result.payload.process.image_path = event::INVALID_STRING;
+    }
+
+    // Extract CommandLine (Unicode null-terminated)
+    if (offset < len && strings != nullptr) {
+        const wchar_t* cmd_line = reinterpret_cast<const wchar_t*>(data + offset);
+        size_t max_chars = (len - offset) / sizeof(wchar_t);
+        size_t wstr_len = 0;
+        while (wstr_len < max_chars && cmd_line[wstr_len] != L'\0') {
+            ++wstr_len;
+        }
+        if (wstr_len > 0) {
+            result.payload.process.command_line = strings->intern_wide({cmd_line, wstr_len});
+        } else {
+            result.payload.process.command_line = event::INVALID_STRING;
+        }
+    } else {
+        result.payload.process.command_line = event::INVALID_STRING;
+    }
 
     result.valid = true;
     return result;
 }
 
 /// @brief Parse ProcessStop event (Event ID 2).
-ParsedEvent parse_process_stop(const EVENT_RECORD* record) {
+ParsedEvent parse_process_stop(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ProcessOp::Terminate);
@@ -132,7 +179,7 @@ ParsedEvent parse_process_stop(const EVENT_RECORD* record) {
 ///   DefaultBase: PVOID
 ///   Reserved1-4: UINT32 each
 ///   FileName: Unicode string
-ParsedEvent parse_image_load(const EVENT_RECORD* record) {
+ParsedEvent parse_image_load(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(event::ProcessOp::LoadLibrary);
@@ -171,7 +218,7 @@ ParsedEvent parse_image_load(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_process_event(const EVENT_RECORD* record) {
+ParsedEvent parse_process_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -180,11 +227,11 @@ ParsedEvent parse_process_event(const EVENT_RECORD* record) {
 
     switch (event_id) {
         case ProcessEventId::ProcessStart:
-            return parse_process_start(record);
+            return parse_process_start(record, strings);
         case ProcessEventId::ProcessStop:
-            return parse_process_stop(record);
+            return parse_process_stop(record, strings);
         case ProcessEventId::ImageLoad:
-            return parse_image_load(record);
+            return parse_image_load(record, strings);
         default:
             // Unknown event ID - return invalid
             return ParsedEvent{.valid = false};

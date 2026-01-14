@@ -175,7 +175,7 @@ ParsedEvent parse_thread_dcend(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_thread_event(const EVENT_RECORD* record) {
+ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }

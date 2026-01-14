@@ -151,7 +151,7 @@ ParsedEvent parse_udp_event(const EVENT_RECORD* record, event::NetworkOp op) {
 
 }  // namespace
 
-ParsedEvent parse_network_event(const EVENT_RECORD* record) {
+ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }

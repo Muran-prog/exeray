@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <shared_mutex>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 
@@ -35,6 +36,11 @@ public:
 
     /// Intern string, return existing ID if present, or allocate new.
     StringId intern(std::string_view str);
+
+    /// Intern wide string by converting to UTF-8.
+    /// @param wstr Wide string view (e.g., from ETW event data).
+    /// @return StringId for the interned UTF-8 string.
+    StringId intern_wide(std::wstring_view wstr);
 
     /// Get string by ID. Returns empty view for INVALID_STRING.
     [[nodiscard]] std::string_view get(StringId id) const noexcept;

@@ -21,6 +21,7 @@
 namespace exeray {
 namespace event {
 class EventGraph;  // Forward declaration
+class StringPool;  // Forward declaration
 }  // namespace event
 
 namespace etw {
@@ -35,6 +36,9 @@ struct ConsumerContext {
     
     /// @brief Atomic target PID for filtering (0 = no filter).
     std::atomic<uint32_t>* target_pid = nullptr;
+
+    /// @brief Pointer to the string pool for interning paths/strings.
+    event::StringPool* strings = nullptr;
 };
 
 /// @brief ETW event record callback function.
@@ -67,6 +71,7 @@ ULONG start_trace_processing(TRACEHANDLE trace_handle);
 namespace exeray {
 namespace event {
 class EventGraph;
+class StringPool;
 }  // namespace event
 
 namespace etw {
@@ -74,6 +79,7 @@ namespace etw {
 struct ConsumerContext {
     event::EventGraph* graph = nullptr;
     std::atomic<uint32_t>* target_pid = nullptr;
+    event::StringPool* strings = nullptr;
 };
 
 /// @brief Stub callback for non-Windows.

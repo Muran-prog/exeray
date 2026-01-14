@@ -17,6 +17,10 @@
 #include "exeray/event/types.hpp"
 #include "exeray/event/payload.hpp"
 
+namespace exeray::event {
+class StringPool;  // Forward declaration
+}  // namespace exeray::event
+
 namespace exeray::etw {
 
 /// @brief Result of parsing an ETW event.
@@ -42,7 +46,7 @@ struct ParsedEvent {
 /// - Event ID 1: ProcessStart → ProcessOp::Create
 /// - Event ID 2: ProcessStop → ProcessOp::Terminate
 /// - Event ID 5: ImageLoad → ProcessOp::LoadLibrary
-ParsedEvent parse_process_event(const EVENT_RECORD* record);
+ParsedEvent parse_process_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Windows-Kernel-File event.
 /// @param record Pointer to the raw ETW event record.
@@ -54,7 +58,7 @@ ParsedEvent parse_process_event(const EVENT_RECORD* record);
 /// - Event ID 14: Read → FileOp::Read
 /// - Event ID 15: Write → FileOp::Write
 /// - Event ID 26: Delete → FileOp::Delete
-ParsedEvent parse_file_event(const EVENT_RECORD* record);
+ParsedEvent parse_file_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Windows-Kernel-Registry event.
 /// @param record Pointer to the raw ETW event record.
@@ -65,12 +69,12 @@ ParsedEvent parse_file_event(const EVENT_RECORD* record);
 /// - Event ID 2: OpenKey → RegistryOp::QueryValue
 /// - Event ID 5: SetValue → RegistryOp::SetValue
 /// - Event ID 6: DeleteValue → RegistryOp::DeleteValue
-ParsedEvent parse_registry_event(const EVENT_RECORD* record);
+ParsedEvent parse_registry_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Windows-Kernel-Network event.
 /// @param record Pointer to the raw ETW event record.
 /// @return ParsedEvent with network operation details.
-ParsedEvent parse_network_event(const EVENT_RECORD* record);
+ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse an Image Load/Unload event.
 /// @param record Pointer to the raw ETW event record.
@@ -80,7 +84,7 @@ ParsedEvent parse_network_event(const EVENT_RECORD* record);
 /// - Event ID 10: Image Load
 /// - Event ID 2:  Image Unload
 /// Also detects suspicious DLLs loaded from temp/appdata paths.
-ParsedEvent parse_image_event(const EVENT_RECORD* record);
+ParsedEvent parse_image_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Thread event.
 /// @param record Pointer to the raw ETW event record.
@@ -92,7 +96,7 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record);
 /// - Event ID 3: DCStart → ThreadOp::DCStart
 /// - Event ID 4: DCEnd → ThreadOp::DCEnd
 /// Detects remote thread injection when creator != target process.
-ParsedEvent parse_thread_event(const EVENT_RECORD* record);
+ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Virtual Memory event.
 /// @param record Pointer to the raw ETW event record.
@@ -102,7 +106,7 @@ ParsedEvent parse_thread_event(const EVENT_RECORD* record);
 /// - Event ID 98: VirtualAlloc → MemoryOp::Alloc
 /// - Event ID 99: VirtualFree → MemoryOp::Free
 /// Detects RWX allocations (PAGE_EXECUTE_READWRITE/WRITECOPY).
-ParsedEvent parse_memory_event(const EVENT_RECORD* record);
+ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Windows-PowerShell event.
 /// @param record Pointer to the raw ETW event record.
@@ -112,7 +116,7 @@ ParsedEvent parse_memory_event(const EVENT_RECORD* record);
 /// - Event ID 4103: Module Logging → ScriptOp::Module
 /// - Event ID 4104: Script Block Logging → ScriptOp::Execute
 /// Detects suspicious patterns (IEX, EncodedCommand, download cradles).
-ParsedEvent parse_powershell_event(const EVENT_RECORD* record);
+ParsedEvent parse_powershell_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Dispatch an ETW event to the appropriate parser based on provider.
 /// @param record Pointer to the raw ETW event record.
@@ -128,7 +132,7 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record);
 /// - KERNEL_MEMORY → parse_memory_event
 /// - POWERSHELL → parse_powershell_event
 /// - AMSI → parse_amsi_event
-ParsedEvent dispatch_event(const EVENT_RECORD* record);
+ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Antimalware-Scan-Interface event.
 /// @param record Pointer to the raw ETW event record.
@@ -137,7 +141,7 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record);
 /// Handles:
 /// - Event ID 1101: AmsiScanBuffer → AmsiOp::Scan
 /// Detects bypass attempts (empty content) and malware results.
-ParsedEvent parse_amsi_event(const EVENT_RECORD* record);
+ParsedEvent parse_amsi_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 }  // namespace exeray::etw
 
@@ -147,6 +151,10 @@ ParsedEvent parse_amsi_event(const EVENT_RECORD* record);
 #include <cstdint>
 #include "exeray/event/types.hpp"
 #include "exeray/event/payload.hpp"
+
+namespace exeray::event {
+class StringPool;  // Forward declaration
+}  // namespace exeray::event
 
 namespace exeray::etw {
 
@@ -163,43 +171,43 @@ struct ParsedEvent {
 // Stub function declarations - return invalid events on non-Windows
 struct EVENT_RECORD;  // Forward declaration
 
-inline ParsedEvent parse_process_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_process_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_file_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_file_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_registry_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_registry_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_network_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_network_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_image_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_image_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_thread_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_thread_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_memory_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_memory_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_powershell_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_powershell_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent parse_amsi_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent parse_amsi_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
-inline ParsedEvent dispatch_event(const EVENT_RECORD* /*record*/) {
+inline ParsedEvent dispatch_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 

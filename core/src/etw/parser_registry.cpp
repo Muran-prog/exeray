@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/event/string_pool.hpp"
 
 #include <cstring>
 
@@ -46,7 +47,7 @@ void init_registry_payload(ParsedEvent& result) {
 ///   Disposition: UINT32 (for CreateKey)
 ///   BaseName: UINT32 (offset)
 ///   RelativeName: Unicode string
-ParsedEvent parse_key_event(const EVENT_RECORD* record, event::RegistryOp op) {
+ParsedEvent parse_key_event(const EVENT_RECORD* record, event::RegistryOp op, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(op);
@@ -89,7 +90,7 @@ ParsedEvent parse_key_event(const EVENT_RECORD* record, event::RegistryOp op) {
 ///   DataSize: UINT32 (for SetValue)
 ///   KeyName: Unicode string
 ///   ValueName: Unicode string
-ParsedEvent parse_value_event(const EVENT_RECORD* record, event::RegistryOp op) {
+ParsedEvent parse_value_event(const EVENT_RECORD* record, event::RegistryOp op, event::StringPool* /*strings*/) {
     ParsedEvent result{};
     extract_common(record, result);
     result.operation = static_cast<uint8_t>(op);
@@ -138,7 +139,7 @@ ParsedEvent parse_value_event(const EVENT_RECORD* record, event::RegistryOp op) 
 
 }  // namespace
 
-ParsedEvent parse_registry_event(const EVENT_RECORD* record) {
+ParsedEvent parse_registry_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -147,13 +148,13 @@ ParsedEvent parse_registry_event(const EVENT_RECORD* record) {
 
     switch (event_id) {
         case RegistryEventId::CreateKey:
-            return parse_key_event(record, event::RegistryOp::CreateKey);
+            return parse_key_event(record, event::RegistryOp::CreateKey, strings);
         case RegistryEventId::OpenKey:
-            return parse_key_event(record, event::RegistryOp::QueryValue);
+            return parse_key_event(record, event::RegistryOp::QueryValue, strings);
         case RegistryEventId::SetValue:
-            return parse_value_event(record, event::RegistryOp::SetValue);
+            return parse_value_event(record, event::RegistryOp::SetValue, strings);
         case RegistryEventId::DeleteValue:
-            return parse_value_event(record, event::RegistryOp::DeleteValue);
+            return parse_value_event(record, event::RegistryOp::DeleteValue, strings);
         default:
             return ParsedEvent{.valid = false};
     }
