@@ -21,11 +21,20 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string_view>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace exeray {
+
+/// @brief Configuration for a single ETW provider.
+struct ProviderConfig {
+    bool enabled = true;           ///< Whether the provider is enabled.
+    uint8_t level = 4;             ///< Trace level (4 = TRACE_LEVEL_INFORMATION).
+    uint64_t keywords = 0;         ///< Keyword bitmask (0 = all keywords).
+};
 
 /// @brief Engine configuration parameters.
 struct EngineConfig {
@@ -33,6 +42,25 @@ struct EngineConfig {
     std::size_t num_threads;  ///< Number of worker threads.
     int log_level = 2;        ///< Log level: 0=trace, 1=debug, 2=info, 3=warn, 4=error.
     std::string log_file;     ///< Optional log file path (empty = stderr only).
+
+    /// @brief Provider configurations (name → config).
+    ///
+    /// Default configuration enables core providers, disables optional ones.
+    std::unordered_map<std::string, ProviderConfig> providers = {
+        {"Process", {true, 4, 0}},
+        {"File", {true, 4, 0}},
+        {"Registry", {true, 4, 0}},
+        {"Network", {true, 4, 0}},
+        {"Image", {true, 4, 0}},
+        {"Thread", {true, 4, 0}},
+        {"Memory", {true, 5, 0}},      // VERBOSE for detailed info
+        {"PowerShell", {true, 5, 0}},
+        {"AMSI", {true, 4, 0}},
+        {"DNS", {false, 4, 0}},        // Disabled by default
+        {"WMI", {false, 4, 0}},
+        {"CLR", {false, 4, 0}},
+        {"Security", {false, 4, 0}},
+    };
 };
 
 /// @brief Core engine integrating ETW tracing and process control.
@@ -136,6 +164,32 @@ public:
     /// @return Vector of EventViews matching the correlation ID.
     [[nodiscard]] std::vector<event::EventView> get_event_chain(uint32_t correlation_id);
 
+    // -------------------------------------------------------------------------
+    // Provider Configuration API
+    // -------------------------------------------------------------------------
+
+    /// @brief Enable a provider by name.
+    ///
+    /// The change takes effect on the next start_monitoring() call.
+    /// Unknown provider names are ignored with a warning.
+    ///
+    /// @param name Provider name (e.g., "Process", "File", "DNS").
+    void enable_provider(std::string_view name);
+
+    /// @brief Disable a provider by name.
+    ///
+    /// The change takes effect on the next start_monitoring() call.
+    /// Unknown provider names are ignored with a warning.
+    ///
+    /// @param name Provider name (e.g., "Process", "File", "DNS").
+    void disable_provider(std::string_view name);
+
+    /// @brief Check if a provider is enabled.
+    ///
+    /// @param name Provider name.
+    /// @return true if the provider exists and is enabled, false otherwise.
+    [[nodiscard]] bool is_provider_enabled(std::string_view name) const;
+
 private:
     /// @brief Legacy background processing task.
     void process();
@@ -164,6 +218,10 @@ private:
     std::atomic<bool> monitoring_{false};
     std::atomic<uint32_t> target_pid_{0};
     etw::ConsumerContext consumer_ctx_;
+
+    // Provider configuration
+    EngineConfig config_;
+    mutable std::mutex providers_mutex_;
 };
 
 }  // namespace exeray

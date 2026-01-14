@@ -6,14 +6,44 @@
 #include "exeray/logging.hpp"
 #include "exeray/process/controller.hpp"
 
+#include <optional>
+
 namespace exeray {
+
+namespace {
+
+/// @brief Map provider name to GUID.
+/// @param name Provider name (e.g., "Process", "File").
+/// @return GUID if known, nullopt otherwise.
+std::optional<etw::GUID> get_provider_guid([[maybe_unused]] std::string_view name) {
+#ifdef _WIN32
+    // Static registry of provider name → GUID mappings
+    if (name == "Process") return etw::providers::KERNEL_PROCESS;
+    if (name == "File") return etw::providers::KERNEL_FILE;
+    if (name == "Registry") return etw::providers::KERNEL_REGISTRY;
+    if (name == "Network") return etw::providers::KERNEL_NETWORK;
+    if (name == "Image") return etw::providers::KERNEL_IMAGE;
+    if (name == "Thread") return etw::providers::KERNEL_THREAD;
+    if (name == "Memory") return etw::providers::KERNEL_MEMORY;
+    if (name == "PowerShell") return etw::providers::POWERSHELL;
+    if (name == "AMSI") return etw::providers::AMSI;
+    if (name == "DNS") return etw::providers::DNS_CLIENT;
+    if (name == "WMI") return etw::providers::WMI_ACTIVITY;
+    if (name == "CLR") return etw::providers::CLR_RUNTIME;
+    if (name == "Security") return etw::providers::SECURITY_AUDITING;
+#endif
+    return std::nullopt;
+}
+
+}  // namespace
 
 Engine::Engine(EngineConfig config)
     : arena_(config.arena_size),
       strings_(arena_),
       graph_(arena_, strings_),
       correlator_(),
-      pool_(config.num_threads) {
+      pool_(config.num_threads),
+      config_(std::move(config)) {
     // Initialize consumer context with graph, correlator, and target_pid
     consumer_ctx_.graph = &graph_;
     consumer_ctx_.target_pid = &target_pid_;
@@ -63,29 +93,28 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
         return false;
     }
 
-    // Step 3: Enable kernel providers for comprehensive monitoring
-    constexpr uint8_t trace_level = 4;  // TRACE_LEVEL_INFORMATION
-    constexpr uint64_t all_keywords = 0xFFFFFFFFFFFFFFFF;
+    // Step 3: Enable providers based on configuration
+    {
+        std::lock_guard lock(providers_mutex_);
+        for (const auto& [name, cfg] : config_.providers) {
+            if (!cfg.enabled) {
+                EXERAY_DEBUG("Provider {} is disabled, skipping", name);
+                continue;
+            }
 
-    etw_session_->enable_provider(etw::providers::KERNEL_PROCESS, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::KERNEL_FILE, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::KERNEL_REGISTRY, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::KERNEL_NETWORK, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::KERNEL_IMAGE, trace_level, all_keywords);
-    etw_session_->enable_provider(
-        etw::providers::POWERSHELL,
-        trace_level,
-        etw::providers::powershell_keywords::ALL
-    );
-    etw_session_->enable_provider(etw::providers::AMSI, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::DNS_CLIENT, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::SECURITY_AUDITING, trace_level, all_keywords);
-    etw_session_->enable_provider(etw::providers::WMI_ACTIVITY, trace_level, all_keywords);
-    etw_session_->enable_provider(
-        etw::providers::CLR_RUNTIME,
-        trace_level,
-        etw::providers::clr_keywords::ALL
-    );
+            auto guid = get_provider_guid(name);
+            if (!guid) {
+                EXERAY_WARN("Unknown provider: {}", name);
+                continue;
+            }
+
+            // Use configured keywords, or all keywords if 0
+            uint64_t keywords = (cfg.keywords == 0) ? 0xFFFFFFFFFFFFFFFF : cfg.keywords;
+            etw_session_->enable_provider(*guid, cfg.level, keywords);
+            EXERAY_DEBUG("Enabled provider {} (level={}, keywords=0x{:x})",
+                         name, cfg.level, keywords);
+        }
+    }
 
     // Step 4: Set monitoring flag before starting thread
     monitoring_.store(true, std::memory_order_release);
@@ -266,6 +295,44 @@ std::vector<event::EventView> Engine::get_event_chain(uint32_t correlation_id) {
     });
 
     return result;
+}
+
+// =============================================================================
+// Provider Configuration API
+// =============================================================================
+
+void Engine::enable_provider(std::string_view name) {
+    std::lock_guard lock(providers_mutex_);
+    std::string key(name);
+    auto it = config_.providers.find(key);
+    if (it != config_.providers.end()) {
+        it->second.enabled = true;
+        EXERAY_DEBUG("Provider {} enabled (takes effect on next start_monitoring)", name);
+    } else {
+        EXERAY_WARN("enable_provider: Unknown provider '{}'", name);
+    }
+}
+
+void Engine::disable_provider(std::string_view name) {
+    std::lock_guard lock(providers_mutex_);
+    std::string key(name);
+    auto it = config_.providers.find(key);
+    if (it != config_.providers.end()) {
+        it->second.enabled = false;
+        EXERAY_DEBUG("Provider {} disabled (takes effect on next start_monitoring)", name);
+    } else {
+        EXERAY_WARN("disable_provider: Unknown provider '{}'", name);
+    }
+}
+
+bool Engine::is_provider_enabled(std::string_view name) const {
+    std::lock_guard lock(providers_mutex_);
+    std::string key(name);
+    auto it = config_.providers.find(key);
+    if (it != config_.providers.end()) {
+        return it->second.enabled;
+    }
+    return false;
 }
 
 }  // namespace exeray
