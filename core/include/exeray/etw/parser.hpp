@@ -72,6 +72,16 @@ ParsedEvent parse_registry_event(const EVENT_RECORD* record);
 /// @return ParsedEvent with network operation details.
 ParsedEvent parse_network_event(const EVENT_RECORD* record);
 
+/// @brief Parse an Image Load/Unload event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with image operation details.
+///
+/// Handles:
+/// - Event ID 10: Image Load
+/// - Event ID 2:  Image Unload
+/// Also detects suspicious DLLs loaded from temp/appdata paths.
+ParsedEvent parse_image_event(const EVENT_RECORD* record);
+
 /// @brief Dispatch an ETW event to the appropriate parser based on provider.
 /// @param record Pointer to the raw ETW event record.
 /// @return ParsedEvent from the matching parser, or invalid if unrecognized.
@@ -81,6 +91,7 @@ ParsedEvent parse_network_event(const EVENT_RECORD* record);
 /// - KERNEL_FILE → parse_file_event
 /// - KERNEL_REGISTRY → parse_registry_event
 /// - KERNEL_NETWORK → parse_network_event
+/// - KERNEL_IMAGE → parse_image_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record);
 
 }  // namespace exeray::etw
@@ -120,6 +131,10 @@ inline ParsedEvent parse_registry_event(const EVENT_RECORD* /*record*/) {
 }
 
 inline ParsedEvent parse_network_event(const EVENT_RECORD* /*record*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_image_event(const EVENT_RECORD* /*record*/) {
     return ParsedEvent{.valid = false};
 }
 

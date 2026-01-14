@@ -39,6 +39,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record) {
     if (guid_equal(provider, providers::KERNEL_NETWORK)) {
         return parse_network_event(record);
     }
+    if (guid_equal(provider, providers::KERNEL_IMAGE)) {
+        return parse_image_event(record);
+    }
 
     // Unknown provider - return invalid
     return ParsedEvent{.valid = false};

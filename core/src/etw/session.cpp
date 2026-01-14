@@ -264,6 +264,13 @@ const GUID KERNEL_NETWORK = {
     {0x8D, 0xFD, 0x43, 0xD9, 0x79, 0x15, 0x3A, 0x88}
 };
 
+// Image Load provider (classic NT Kernel Logger)
+// {2CB15D1D-5FC1-11D2-ABE1-00A0C911F518}
+const GUID KERNEL_IMAGE = {
+    0x2CB15D1D, 0x5FC1, 0x11D2,
+    {0xAB, 0xE1, 0x00, 0xA0, 0xC9, 0x11, 0xF5, 0x18}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -279,6 +286,7 @@ const GUID KERNEL_PROCESS = {0, 0, 0, {0}};
 const GUID KERNEL_FILE = {0, 0, 0, {0}};
 const GUID KERNEL_REGISTRY = {0, 0, 0, {0}};
 const GUID KERNEL_NETWORK = {0, 0, 0, {0}};
+const GUID KERNEL_IMAGE = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

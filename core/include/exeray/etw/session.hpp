@@ -117,6 +117,11 @@ extern const GUID KERNEL_REGISTRY;
 /// Traces network operations (TCP/UDP connect, send, receive).
 extern const GUID KERNEL_NETWORK;
 
+/// Image Load provider (classic NT Kernel Logger)
+/// GUID: {2CB15D1D-5FC1-11D2-ABE1-00A0C911F518}
+/// Traces DLL/EXE image load and unload events.
+extern const GUID KERNEL_IMAGE;
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -186,6 +191,7 @@ extern const GUID KERNEL_PROCESS;
 extern const GUID KERNEL_FILE;
 extern const GUID KERNEL_REGISTRY;
 extern const GUID KERNEL_NETWORK;
+extern const GUID KERNEL_IMAGE;
 }  // namespace providers
 
 }  // namespace exeray::etw

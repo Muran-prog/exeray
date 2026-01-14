@@ -69,6 +69,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
     etw_session_->enable_provider(etw::providers::KERNEL_FILE, trace_level, all_keywords);
     etw_session_->enable_provider(etw::providers::KERNEL_REGISTRY, trace_level, all_keywords);
     etw_session_->enable_provider(etw::providers::KERNEL_NETWORK, trace_level, all_keywords);
+    etw_session_->enable_provider(etw::providers::KERNEL_IMAGE, trace_level, all_keywords);
 
     // Step 4: Set monitoring flag before starting thread
     monitoring_.store(true, std::memory_order_release);

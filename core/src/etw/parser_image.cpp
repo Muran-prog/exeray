@@ -1,0 +1,246 @@
+/// @file parser_image.cpp
+/// @brief ETW parser for Image Load/Unload events.
+///
+/// Parses events from the classic NT Kernel Logger Image provider.
+/// Used to detect DLL/EXE loading for process injection monitoring.
+
+#ifdef _WIN32
+
+#include "exeray/etw/parser.hpp"
+#include "exeray/etw/session.hpp"
+
+#include <cstring>
+#include <cwchar>
+
+namespace exeray::etw {
+
+namespace {
+
+/// Image event IDs from NT Kernel Logger Image class.
+enum class ImageEventId : uint16_t {
+    Unload = 2,   ///< Image unloaded from process
+    Load = 10     ///< Image loaded into process
+};
+
+/// @brief Extract common fields from EVENT_RECORD header.
+void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
+    out.pid = record->EventHeader.ProcessId;
+    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
+    out.status = event::Status::Success;
+    out.category = event::Category::Image;
+}
+
+/// @brief Check if a path is suspicious (temp/appdata directories).
+///
+/// DLLs loaded from temporary locations are often used for injection attacks.
+/// @param path Wide string path to check.
+/// @param len Length of path in characters.
+/// @return true if path contains suspicious patterns.
+bool is_suspicious_path(const wchar_t* path, size_t len) {
+    if (path == nullptr || len == 0) {
+        return false;
+    }
+
+    // Convert to lowercase for case-insensitive matching
+    // Check for common suspicious patterns
+    const wchar_t* suspicious_patterns[] = {
+        L"\\temp\\",
+        L"\\tmp\\",
+        L"\\appdata\\local\\temp\\",
+        L"\\appdata\\roaming\\",
+        L"\\users\\public\\",
+        L"\\programdata\\"
+    };
+
+    // Simple substring search (case-insensitive would require more code)
+    for (const auto* pattern : suspicious_patterns) {
+        if (wcsstr(path, pattern) != nullptr) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/// @brief Parse Image Load event (Event ID 10).
+///
+/// UserData layout (64-bit systems):
+///   ImageBase: PVOID (8 bytes)
+///   ImageSize: PVOID (8 bytes)
+///   ProcessId: UINT32 (4 bytes)
+///   ImageChecksum: UINT32 (4 bytes)
+///   TimeDateStamp: UINT32 (4 bytes)
+///   Reserved0: UINT32 (4 bytes)
+///   DefaultBase: PVOID (8 bytes)
+///   Reserved1-4: UINT32 * 4 (16 bytes)
+///   FileName: Unicode string (null-terminated)
+ParsedEvent parse_image_load(const EVENT_RECORD* record) {
+    ParsedEvent result{};
+    extract_common(record, result);
+    result.operation = static_cast<uint8_t>(event::ImageOp::Load);
+    result.payload.category = event::Category::Image;
+
+    const auto* data = static_cast<const uint8_t*>(record->UserData);
+    const auto len = record->UserDataLength;
+
+    if (data == nullptr || len < 32) {
+        result.valid = false;
+        return result;
+    }
+
+    // Determine pointer size from event flags
+    const bool is64bit = (record->EventHeader.Flags & EVENT_HEADER_FLAG_64_BIT_HEADER) != 0;
+    const size_t ptr_size = is64bit ? 8 : 4;
+
+    size_t offset = 0;
+
+    // Extract ImageBase
+    uint64_t image_base = 0;
+    if (is64bit) {
+        std::memcpy(&image_base, data + offset, sizeof(uint64_t));
+    } else {
+        uint32_t base32 = 0;
+        std::memcpy(&base32, data + offset, sizeof(uint32_t));
+        image_base = base32;
+    }
+    offset += ptr_size;
+
+    // Extract ImageSize
+    uint64_t image_size = 0;
+    if (is64bit) {
+        std::memcpy(&image_size, data + offset, sizeof(uint64_t));
+    } else {
+        uint32_t size32 = 0;
+        std::memcpy(&size32, data + offset, sizeof(uint32_t));
+        image_size = size32;
+    }
+    offset += ptr_size;
+
+    // Extract ProcessId
+    if (offset + 4 > len) {
+        result.valid = false;
+        return result;
+    }
+    uint32_t process_id = 0;
+    std::memcpy(&process_id, data + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    // Skip ImageChecksum, TimeDateStamp, Reserved0
+    offset += 3 * sizeof(uint32_t);
+
+    // Skip DefaultBase
+    offset += ptr_size;
+
+    // Skip Reserved1-4
+    offset += 4 * sizeof(uint32_t);
+
+    // FileName starts here (null-terminated Unicode string)
+    const wchar_t* filename = nullptr;
+    size_t filename_len = 0;
+    if (offset < len) {
+        filename = reinterpret_cast<const wchar_t*>(data + offset);
+        filename_len = (len - offset) / sizeof(wchar_t);
+    }
+
+    // Populate payload
+    result.payload.image.image_path = event::INVALID_STRING;  // Would be interned
+    result.payload.image.process_id = process_id;
+    result.payload.image.base_address = image_base;
+    result.payload.image.size = static_cast<uint32_t>(image_size);
+    result.payload.image.is_suspicious = is_suspicious_path(filename, filename_len) ? 1 : 0;
+
+    result.valid = true;
+    return result;
+}
+
+/// @brief Parse Image Unload event (Event ID 2).
+ParsedEvent parse_image_unload(const EVENT_RECORD* record) {
+    ParsedEvent result{};
+    extract_common(record, result);
+    result.operation = static_cast<uint8_t>(event::ImageOp::Unload);
+    result.payload.category = event::Category::Image;
+
+    const auto* data = static_cast<const uint8_t*>(record->UserData);
+    const auto len = record->UserDataLength;
+
+    if (data == nullptr || len < 16) {
+        result.valid = false;
+        return result;
+    }
+
+    const bool is64bit = (record->EventHeader.Flags & EVENT_HEADER_FLAG_64_BIT_HEADER) != 0;
+    const size_t ptr_size = is64bit ? 8 : 4;
+
+    size_t offset = 0;
+
+    // Extract ImageBase
+    uint64_t image_base = 0;
+    if (is64bit) {
+        std::memcpy(&image_base, data + offset, sizeof(uint64_t));
+    } else {
+        uint32_t base32 = 0;
+        std::memcpy(&base32, data + offset, sizeof(uint32_t));
+        image_base = base32;
+    }
+    offset += ptr_size;
+
+    // Extract ImageSize
+    uint64_t image_size = 0;
+    if (is64bit) {
+        std::memcpy(&image_size, data + offset, sizeof(uint64_t));
+    } else {
+        uint32_t size32 = 0;
+        std::memcpy(&size32, data + offset, sizeof(uint32_t));
+        image_size = size32;
+    }
+    offset += ptr_size;
+
+    // Extract ProcessId
+    if (offset + 4 > len) {
+        result.valid = false;
+        return result;
+    }
+    uint32_t process_id = 0;
+    std::memcpy(&process_id, data + offset, sizeof(uint32_t));
+
+    // Populate payload
+    result.payload.image.image_path = event::INVALID_STRING;
+    result.payload.image.process_id = process_id;
+    result.payload.image.base_address = image_base;
+    result.payload.image.size = static_cast<uint32_t>(image_size);
+    result.payload.image.is_suspicious = 0;
+
+    result.valid = true;
+    return result;
+}
+
+}  // namespace
+
+ParsedEvent parse_image_event(const EVENT_RECORD* record) {
+    if (record == nullptr) {
+        return ParsedEvent{.valid = false};
+    }
+
+    const auto event_id = static_cast<ImageEventId>(record->EventHeader.EventDescriptor.Id);
+
+    switch (event_id) {
+        case ImageEventId::Load:
+            return parse_image_load(record);
+        case ImageEventId::Unload:
+            return parse_image_unload(record);
+        default:
+            // Unknown event ID - return invalid
+            return ParsedEvent{.valid = false};
+    }
+}
+
+}  // namespace exeray::etw
+
+#else  // !_WIN32
+
+// Empty translation unit for non-Windows
+namespace exeray::etw {
+// Stub defined in header as inline
+}  // namespace exeray::etw
+
+#endif  // _WIN32

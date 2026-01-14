@@ -93,6 +93,21 @@ struct InputPayload {
     uint64_t _pad;         ///< Explicit padding for alignment
 };
 
+/**
+ * @brief Payload for image load/unload operations.
+ *
+ * Contains image path, load address, size, and suspicious flag.
+ * Used for detecting process injection via LoadLibrary/LdrLoadDll.
+ */
+struct ImagePayload {
+    StringId image_path;     ///< Interned DLL/EXE path
+    uint32_t process_id;     ///< Target process ID
+    uint64_t base_address;   ///< Load address in target process
+    uint32_t size;           ///< Image size in bytes (max 4GB)
+    uint8_t is_suspicious;   ///< 1 if loaded from temp/appdata
+    uint8_t _pad[3];         ///< Explicit padding for alignment
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -122,6 +137,7 @@ struct EventPayload {
         ProcessPayload process;     ///< Active when category == Process
         SchedulerPayload scheduler; ///< Active when category == Scheduler
         InputPayload input;         ///< Active when category == Input
+        ImagePayload image;         ///< Active when category == Image
     };
 };
 
@@ -141,6 +157,8 @@ static_assert(sizeof(SchedulerPayload) == 16,
               "SchedulerPayload must be 16 bytes");
 static_assert(sizeof(InputPayload) == 16,
               "InputPayload must be 16 bytes");
+static_assert(sizeof(ImagePayload) == 24,
+              "ImagePayload must be 24 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -161,6 +179,8 @@ static_assert(std::is_trivially_copyable_v<SchedulerPayload>,
               "SchedulerPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<InputPayload>,
               "InputPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ImagePayload>,
+              "ImagePayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

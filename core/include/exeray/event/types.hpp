@@ -49,6 +49,7 @@ enum class Category : std::uint8_t {
     Process,      ///< Process and module operations
     Scheduler,    ///< Task scheduler operations
     Input,        ///< Input device hooks and blocks
+    Image,        ///< DLL/EXE image load/unload operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -122,6 +123,16 @@ enum class InputOp : std::uint8_t {
     InstallHook    ///< Install input hook
 };
 
+/**
+ * @brief Image load/unload operation types.
+ *
+ * Tracks DLL and EXE loading for process injection detection.
+ */
+enum class ImageOp : std::uint8_t {
+    Load,   ///< Image loaded into process
+    Unload  ///< Image unloaded from process
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -148,6 +159,7 @@ static_assert(sizeof(NetworkOp) == 1, "NetworkOp must be 1 byte");
 static_assert(sizeof(ProcessOp) == 1, "ProcessOp must be 1 byte");
 static_assert(sizeof(SchedulerOp) == 1, "SchedulerOp must be 1 byte");
 static_assert(sizeof(InputOp) == 1, "InputOp must be 1 byte");
+static_assert(sizeof(ImageOp) == 1, "ImageOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -165,6 +177,8 @@ static_assert(std::is_trivially_copyable_v<SchedulerOp>,
               "SchedulerOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<InputOp>,
               "InputOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ImageOp>,
+              "ImageOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

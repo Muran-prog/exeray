@@ -156,6 +156,12 @@ public:
         return static_cast<InputOp>(node_->operation);
     }
 
+    /// Get operation as ImageOp (asserts correct category).
+    [[nodiscard]] ImageOp image_op() const noexcept {
+        assert(category() == Category::Image && "Invalid category for image_op");
+        return static_cast<ImageOp>(node_->operation);
+    }
+
     /// @}
 
     /// @name Typed Payload Accessors
@@ -195,6 +201,12 @@ public:
     [[nodiscard]] const InputPayload& as_input() const {
         assert(category() == Category::Input && "Invalid category for as_input");
         return node_->payload.input;
+    }
+
+    /// Get image payload reference (asserts correct category).
+    [[nodiscard]] const ImagePayload& as_image() const {
+        assert(category() == Category::Image && "Invalid category for as_image");
+        return node_->payload.image;
     }
 
     /// @}
