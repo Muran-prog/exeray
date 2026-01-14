@@ -9,7 +9,7 @@ struct StatusFlags {
     static constexpr std::uint64_t PENDING  = 1 << 0;
     static constexpr std::uint64_t COMPLETE = 1 << 1;
     static constexpr std::uint64_t READY    = 1 << 2;
-    static constexpr std::uint64_t ERROR    = 1 << 3;
+    static constexpr std::uint64_t ERRORED  = 1 << 3;  // Not ERROR - conflicts with Windows macro
 };
 
 }
