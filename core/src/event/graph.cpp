@@ -17,7 +17,8 @@ EventGraph::EventGraph(Arena& arena, StringPool& strings, std::size_t capacity)
 }
 
 EventId EventGraph::push(Category cat, std::uint8_t op, Status status,
-                         EventId parent, const EventPayload& payload) {
+                         EventId parent, uint32_t correlation_id,
+                         const EventPayload& payload) {
     // Reserve a slot atomically
     const auto index = count_.fetch_add(1, std::memory_order_acq_rel);
 
@@ -45,6 +46,7 @@ EventId EventGraph::push(Category cat, std::uint8_t op, Status status,
     node.timestamp = timestamp;
     node.status = status;
     node.operation = op;
+    node.correlation_id = correlation_id;
     std::memset(node._pad, 0, sizeof(node._pad));
 
     // Copy payload, ensuring category is set correctly

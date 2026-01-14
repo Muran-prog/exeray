@@ -75,11 +75,13 @@ public:
      * @param op Category-specific operation code.
      * @param status Operation result status.
      * @param parent Parent event ID (INVALID_EVENT for root events).
+     * @param correlation_id Correlation ID for grouping related events.
      * @param payload Category-specific payload data.
      * @return Unique event ID, or INVALID_EVENT if capacity exceeded.
      */
     EventId push(Category cat, std::uint8_t op, Status status,
-                 EventId parent, const EventPayload& payload);
+                 EventId parent, uint32_t correlation_id,
+                 const EventPayload& payload);
 
     /**
      * @brief Get event view by ID (thread-safe read).
@@ -131,6 +133,15 @@ public:
      */
     template <typename F>
     void for_each_child(EventId parent, F&& fn) const;
+
+    /**
+     * @brief Iterate over events with a specific correlation ID.
+     * @tparam F Callable taking EventView.
+     * @param correlation_id Correlation ID to filter by.
+     * @param fn Function to call for each matching event.
+     */
+    template <typename F>
+    void for_each_correlation(uint32_t correlation_id, F&& fn) const;
 
     // -------------------------------------------------------------------------
     // String Convenience Methods
@@ -190,6 +201,17 @@ void EventGraph::for_each_child(EventId parent, F&& fn) const {
     const auto current_count = count_.load(std::memory_order_acquire);
     for (std::size_t i = 0; i < current_count; ++i) {
         if (nodes_[i].parent_id == parent) {
+            fn(EventView(&nodes_[i]));
+        }
+    }
+}
+
+template <typename F>
+void EventGraph::for_each_correlation(uint32_t correlation_id, F&& fn) const {
+    std::shared_lock lock(mutex_);
+    const auto current_count = count_.load(std::memory_order_acquire);
+    for (std::size_t i = 0; i < current_count; ++i) {
+        if (nodes_[i].correlation_id == correlation_id) {
             fn(EventView(&nodes_[i]));
         }
     }

@@ -13,10 +13,13 @@ Engine::Engine(EngineConfig config)
     : arena_(config.arena_size),
       strings_(arena_),
       graph_(arena_, strings_),
+      correlator_(),
       pool_(config.num_threads) {
-    // Initialize consumer context with graph and target_pid references
+    // Initialize consumer context with graph, correlator, and target_pid
     consumer_ctx_.graph = &graph_;
     consumer_ctx_.target_pid = &target_pid_;
+    consumer_ctx_.strings = &strings_;
+    consumer_ctx_.correlator = &correlator_;
 }
 
 Engine::~Engine() {
@@ -218,4 +221,53 @@ void Engine::etw_thread_func() {
 #endif
 }
 
+// =============================================================================
+// Event Correlation API
+// =============================================================================
+
+std::vector<event::EventView> Engine::get_process_tree(uint32_t pid) {
+    std::vector<event::EventView> result;
+
+    // Find the process's most recent ProcessCreate event
+    event::EventId current_id = correlator_.find_thread_parent(pid);
+    if (current_id == event::INVALID_EVENT) {
+        return result;
+    }
+
+    // Walk up the parent chain, collecting process events
+    constexpr std::size_t max_depth = 100;  // Prevent infinite loops
+    std::size_t depth = 0;
+
+    while (current_id != event::INVALID_EVENT && depth < max_depth) {
+        if (!graph_.exists(current_id)) {
+            break;
+        }
+
+        auto view = graph_.get(current_id);
+        result.push_back(view);
+
+        // Move to parent
+        current_id = view.parent_id();
+        ++depth;
+    }
+
+    return result;
+}
+
+std::vector<event::EventView> Engine::get_event_chain(uint32_t correlation_id) {
+    std::vector<event::EventView> result;
+
+    if (correlation_id == 0) {
+        return result;
+    }
+
+    // Collect all events with matching correlation ID
+    graph_.for_each_correlation(correlation_id, [&result](event::EventView view) {
+        result.push_back(view);
+    });
+
+    return result;
+}
+
 }  // namespace exeray
+

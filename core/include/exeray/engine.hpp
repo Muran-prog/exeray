@@ -9,6 +9,7 @@
 /// - Thread-safe event storage in EventGraph
 
 #include "exeray/arena.hpp"
+#include "exeray/event/correlator.hpp"
 #include "exeray/event/graph.hpp"
 #include "exeray/event/string_pool.hpp"
 #include "exeray/etw/consumer.hpp"
@@ -22,6 +23,7 @@
 #include <memory>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 namespace exeray {
 
@@ -110,6 +112,28 @@ public:
     /// @brief Get const reference to the event graph.
     [[nodiscard]] const event::EventGraph& graph() const { return graph_; }
 
+    // -------------------------------------------------------------------------
+    // Event Correlation API
+    // -------------------------------------------------------------------------
+
+    /// @brief Get process tree (ancestors) for a PID.
+    ///
+    /// Walks up the parent chain from the most recent ProcessCreate event
+    /// for the given PID, collecting all ancestor process events.
+    ///
+    /// @param pid Process ID to start from.
+    /// @return Vector of EventViews representing the process ancestry.
+    [[nodiscard]] std::vector<event::EventView> get_process_tree(uint32_t pid);
+
+    /// @brief Get all events with a specific correlation ID.
+    ///
+    /// Returns all events (Process, Thread, Memory, Image, etc.) that share
+    /// the same correlation ID, representing a related execution chain.
+    ///
+    /// @param correlation_id Correlation ID to filter by.
+    /// @return Vector of EventViews matching the correlation ID.
+    [[nodiscard]] std::vector<event::EventView> get_event_chain(uint32_t correlation_id);
+
 private:
     /// @brief Legacy background processing task.
     void process();
@@ -123,6 +147,7 @@ private:
     Arena arena_;
     event::StringPool strings_;
     event::EventGraph graph_;
+    event::Correlator correlator_;
     ThreadPool pool_;
 
     // Legacy task state

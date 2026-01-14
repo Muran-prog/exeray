@@ -22,6 +22,7 @@ namespace exeray {
 namespace event {
 class EventGraph;  // Forward declaration
 class StringPool;  // Forward declaration
+class Correlator;  // Forward declaration
 }  // namespace event
 
 namespace etw {
@@ -29,7 +30,7 @@ namespace etw {
 /// @brief Context passed to ETW callback via EVENT_TRACE_LOGFILE::Context.
 ///
 /// This structure is stored in the UserContext field and provides the callback
-/// with access to the event graph and target PID filter.
+/// with access to the event graph, correlator, and target PID filter.
 struct ConsumerContext {
     /// @brief Pointer to the event graph for pushing parsed events.
     event::EventGraph* graph = nullptr;
@@ -39,6 +40,9 @@ struct ConsumerContext {
 
     /// @brief Pointer to the string pool for interning paths/strings.
     event::StringPool* strings = nullptr;
+
+    /// @brief Pointer to the correlator for building event chains.
+    event::Correlator* correlator = nullptr;
 };
 
 /// @brief ETW event record callback function.
@@ -72,6 +76,7 @@ namespace exeray {
 namespace event {
 class EventGraph;
 class StringPool;
+class Correlator;
 }  // namespace event
 
 namespace etw {
@@ -80,6 +85,7 @@ struct ConsumerContext {
     event::EventGraph* graph = nullptr;
     std::atomic<uint32_t>* target_pid = nullptr;
     event::StringPool* strings = nullptr;
+    event::Correlator* correlator = nullptr;
 };
 
 /// @brief Stub callback for non-Windows.

@@ -10,6 +10,7 @@ add_library(exeray_core STATIC
     src/engine.cpp
     src/event/string_pool.cpp
     src/event/graph.cpp
+    src/event/correlator.cpp
     src/etw/session.cpp
     src/etw/consumer.cpp
     src/etw/parser_process.cpp

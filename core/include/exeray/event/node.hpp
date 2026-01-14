@@ -29,22 +29,24 @@ namespace exeray::event {
  * patterns and minimal cache contention.
  *
  * Memory layout:
- *   - id:        8 bytes (EventId)
- *   - parent_id: 8 bytes (EventId, 0 = root event)
- *   - timestamp: 8 bytes (nanoseconds since epoch)
- *   - status:    1 byte  (operation result)
- *   - operation: 1 byte  (category-specific operation code)
- *   - _pad:      6 bytes (explicit padding)
- *   - payload:   32 bytes (category-specific data)
- *   - Total:     64 bytes
+ *   - id:             8 bytes (EventId)
+ *   - parent_id:      8 bytes (EventId, 0 = root event)
+ *   - timestamp:      8 bytes (nanoseconds since epoch)
+ *   - correlation_id: 4 bytes (groups related events)
+ *   - status:         1 byte  (operation result)
+ *   - operation:      1 byte  (category-specific operation code)
+ *   - _pad:           2 bytes (explicit padding)
+ *   - payload:        32 bytes (category-specific data)
+ *   - Total:          64 bytes
  */
 struct alignas(64) EventNode {
     EventId id;              ///< Unique event identifier
     EventId parent_id;       ///< Parent event ID (0 = root event)
     Timestamp timestamp;     ///< High-resolution timestamp (ns since epoch)
+    uint32_t correlation_id; ///< Correlation ID for grouping related events
     Status status;           ///< Operation result status
     uint8_t operation;       ///< Category-specific operation code
-    uint8_t _pad[6];         ///< Explicit padding for alignment
+    uint8_t _pad[2];         ///< Explicit padding for alignment
     EventPayload payload;    ///< Category-specific payload data (32 bytes)
 };
 
@@ -114,6 +116,9 @@ public:
 
     /// Get the raw operation code.
     [[nodiscard]] uint8_t operation() const noexcept { return node_->operation; }
+
+    /// Get the correlation ID for event grouping.
+    [[nodiscard]] uint32_t correlation_id() const noexcept { return node_->correlation_id; }
 
     /// @}
 

@@ -34,7 +34,7 @@ TEST_F(EventGraphTest, PushAndGetRoundtrip) {
     EventPayload payload = make_file_payload(path);
     EventId id = graph_.push(Category::FileSystem,
                               static_cast<uint8_t>(FileOp::Create),
-                              Status::Success, INVALID_EVENT, payload);
+                              Status::Success, INVALID_EVENT, 0, payload);
 
     EXPECT_NE(id, INVALID_EVENT);
     EXPECT_TRUE(graph_.exists(id));
@@ -55,10 +55,10 @@ TEST_F(EventGraphTest, MultipleEventsGetUniqueIds) {
 
     EventId id1 = graph_.push(Category::FileSystem,
                                static_cast<uint8_t>(FileOp::Read),
-                               Status::Success, INVALID_EVENT, p1);
+                               Status::Success, INVALID_EVENT, 0, p1);
     EventId id2 = graph_.push(Category::FileSystem,
                                static_cast<uint8_t>(FileOp::Write),
-                               Status::Success, INVALID_EVENT, p2);
+                               Status::Success, INVALID_EVENT, 0, p2);
 
     EXPECT_NE(id1, INVALID_EVENT);
     EXPECT_NE(id2, INVALID_EVENT);
@@ -73,11 +73,11 @@ TEST_F(EventGraphTest, ParentChildRelationship) {
 
     EventId parent = graph_.push(Category::FileSystem,
                                   static_cast<uint8_t>(FileOp::Create),
-                                  Status::Success, INVALID_EVENT, payload);
+                                  Status::Success, INVALID_EVENT, 0, payload);
 
     EventId child = graph_.push(Category::FileSystem,
                                  static_cast<uint8_t>(FileOp::Write),
-                                 Status::Success, parent, payload);
+                                 Status::Success, parent, 0, payload);
 
     EventView parent_view = graph_.get(parent);
     EventView child_view = graph_.get(child);
@@ -92,11 +92,11 @@ TEST_F(EventGraphTest, CountTracksEvents) {
     EventPayload payload = make_file_payload(strings_.intern("test.txt"));
 
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Create),
-                Status::Success, INVALID_EVENT, payload);
+                Status::Success, INVALID_EVENT, 0, payload);
     EXPECT_EQ(graph_.count(), 1U);
 
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Delete),
-                Status::Success, INVALID_EVENT, payload);
+                Status::Success, INVALID_EVENT, 0, payload);
     EXPECT_EQ(graph_.count(), 2U);
 }
 
@@ -115,9 +115,9 @@ TEST_F(EventGraphTest, ForEachIteratesAllEvents) {
     EventPayload payload = make_file_payload(strings_.intern("test.txt"));
 
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Create),
-                Status::Success, INVALID_EVENT, payload);
+                Status::Success, INVALID_EVENT, 0, payload);
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Read),
-                Status::Success, INVALID_EVENT, payload);
+                Status::Success, INVALID_EVENT, 0, payload);
 
     std::size_t count = 0;
     graph_.for_each([&count](EventView) { ++count; });
@@ -135,11 +135,11 @@ TEST_F(EventGraphTest, ForEachCategoryFiltersCorrectly) {
     net_payload.network.local_port = 8080;
 
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Create),
-                Status::Success, INVALID_EVENT, file_payload);
+                Status::Success, INVALID_EVENT, 0, file_payload);
     graph_.push(Category::Network, static_cast<uint8_t>(NetworkOp::Connect),
-                Status::Success, INVALID_EVENT, net_payload);
+                Status::Success, INVALID_EVENT, 0, net_payload);
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Read),
-                Status::Success, INVALID_EVENT, file_payload);
+                Status::Success, INVALID_EVENT, 0, file_payload);
 
     std::size_t file_count = 0;
     graph_.for_each_category(Category::FileSystem,
@@ -157,15 +157,15 @@ TEST_F(EventGraphTest, ForEachChildFindsChildren) {
 
     EventId parent = graph_.push(Category::FileSystem,
                                   static_cast<uint8_t>(FileOp::Create),
-                                  Status::Success, INVALID_EVENT, payload);
+                                  Status::Success, INVALID_EVENT, 0, payload);
 
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Write),
-                Status::Success, parent, payload);
+                Status::Success, parent, 0, payload);
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Read),
-                Status::Success, parent, payload);
+                Status::Success, parent, 0, payload);
     // This one is a root, not a child
     graph_.push(Category::FileSystem, static_cast<uint8_t>(FileOp::Delete),
-                Status::Success, INVALID_EVENT, payload);
+                Status::Success, INVALID_EVENT, 0, payload);
 
     std::size_t child_count = 0;
     graph_.for_each_child(parent, [&child_count](EventView) { ++child_count; });
@@ -183,13 +183,13 @@ TEST_F(EventGraphTest, CapacityLimitReturnsInvalidEvent) {
 
     EventId id1 = small_graph.push(Category::FileSystem,
                                     static_cast<uint8_t>(FileOp::Create),
-                                    Status::Success, INVALID_EVENT, payload);
+                                    Status::Success, INVALID_EVENT, 0, payload);
     EventId id2 = small_graph.push(Category::FileSystem,
                                     static_cast<uint8_t>(FileOp::Read),
-                                    Status::Success, INVALID_EVENT, payload);
+                                    Status::Success, INVALID_EVENT, 0, payload);
     EventId id3 = small_graph.push(Category::FileSystem,
                                     static_cast<uint8_t>(FileOp::Write),
-                                    Status::Success, INVALID_EVENT, payload);
+                                    Status::Success, INVALID_EVENT, 0, payload);
 
     EXPECT_NE(id1, INVALID_EVENT);
     EXPECT_NE(id2, INVALID_EVENT);
@@ -214,7 +214,7 @@ TEST_F(EventGraphTest, ConcurrentPush) {
                 EventId id = graph_.push(Category::FileSystem,
                                           static_cast<uint8_t>(FileOp::Write),
                                           Status::Success, INVALID_EVENT,
-                                          payload);
+                                          0, payload);
                 if (id != INVALID_EVENT) {
                     ++success_count;
                 }
@@ -246,7 +246,7 @@ TEST_F(EventGraphTest, ConcurrentPushAndRead) {
                 payload.category = Category::FileSystem;
                 graph_.push(Category::FileSystem,
                             static_cast<uint8_t>(FileOp::Create),
-                            Status::Success, INVALID_EVENT, payload);
+                            Status::Success, INVALID_EVENT, 0, payload);
             }
         });
     }
@@ -283,10 +283,10 @@ TEST_F(EventGraphTest, TimestampIsMonotonicallyIncreasing) {
 
     EventId id1 = graph_.push(Category::FileSystem,
                                static_cast<uint8_t>(FileOp::Create),
-                               Status::Success, INVALID_EVENT, payload);
+                               Status::Success, INVALID_EVENT, 0, payload);
     EventId id2 = graph_.push(Category::FileSystem,
                                static_cast<uint8_t>(FileOp::Write),
-                               Status::Success, INVALID_EVENT, payload);
+                               Status::Success, INVALID_EVENT, 0, payload);
 
     EventView v1 = graph_.get(id1);
     EventView v2 = graph_.get(id2);
