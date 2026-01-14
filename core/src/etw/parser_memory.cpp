@@ -19,10 +19,11 @@ enum class MemoryEventId : uint16_t {
     VirtualFree = 99    ///< VirtualFree
 };
 
-// Memory protection constants from WinNT.h
+// Memory protection constants (values from WinNT.h)
 // These indicate executable + writable memory - suspicious for shellcode
-constexpr uint32_t PAGE_EXECUTE_READWRITE = 0x40;
-constexpr uint32_t PAGE_EXECUTE_WRITECOPY = 0x80;
+// Note: We use custom names to avoid conflicts with Windows macros
+constexpr uint32_t RWX_PAGE_EXECUTE_READWRITE = 0x40;
+constexpr uint32_t RWX_PAGE_EXECUTE_WRITECOPY = 0x80;
 
 // Threshold for "large" allocations (1MB)
 constexpr uint64_t LARGE_ALLOC_THRESHOLD = 1024 * 1024;
@@ -35,8 +36,8 @@ constexpr uint64_t LARGE_ALLOC_THRESHOLD = 1024 * 1024;
 /// @param protection PAGE_* protection flags.
 /// @return true if RWX protection detected.
 bool is_rwx_protection(uint32_t protection) {
-    return (protection == PAGE_EXECUTE_READWRITE) ||
-           (protection == PAGE_EXECUTE_WRITECOPY);
+    return (protection == RWX_PAGE_EXECUTE_READWRITE) ||
+           (protection == RWX_PAGE_EXECUTE_WRITECOPY);
 }
 
 /// @brief Extract common fields from EVENT_RECORD header.
