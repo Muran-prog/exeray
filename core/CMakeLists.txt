@@ -9,6 +9,7 @@ add_library(exeray_core STATIC
     src/stub.cpp
     src/event/string_pool.cpp
     src/event/graph.cpp
+    src/etw/session.cpp
 )
 
 target_include_directories(exeray_core PUBLIC
@@ -20,6 +21,11 @@ target_compile_options(exeray_core PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
     $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-O3>
 )
+
+# Windows ETW requires advapi32
+if(WIN32)
+    target_link_libraries(exeray_core PRIVATE advapi32)
+endif()
 
 install(TARGETS exeray_core
     ARCHIVE DESTINATION lib
