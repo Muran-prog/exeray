@@ -19,6 +19,11 @@
 #include <mutex>
 #include <algorithm>
 
+// Disable Windows min/max macros before any Windows headers
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "exeray/logging.hpp"
 
 namespace exeray::etw {
@@ -151,7 +156,7 @@ const char* logon_type_name(uint32_t type) {
 /// @brief Convert wide string to narrow for logging.
 std::string wstring_to_narrow(std::wstring_view wstr, size_t max_len = 100) {
     std::string result;
-    result.reserve(std::min(wstr.size(), max_len));
+    result.reserve((std::min)(wstr.size(), max_len));
     for (size_t i = 0; i < wstr.size() && i < max_len; ++i) {
         result.push_back(static_cast<char>(wstr[i] & 0x7F));
     }

@@ -17,6 +17,12 @@
 #include <string>
 #include <string_view>
 
+// Disable Windows min/max macros
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <algorithm>
+
 #include "exeray/logging.hpp"
 
 namespace exeray::etw {
@@ -139,7 +145,7 @@ bool is_remote_host(std::wstring_view host) {
 /// @brief Convert wide string to narrow for logging.
 std::string wstring_to_narrow(std::wstring_view wstr, size_t max_len = 80) {
     std::string result;
-    result.reserve(std::min(wstr.size(), max_len));
+    result.reserve((std::min)(wstr.size(), max_len));
     for (size_t i = 0; i < wstr.size() && i < max_len; ++i) {
         result.push_back(static_cast<char>(wstr[i] & 0x7F));
     }

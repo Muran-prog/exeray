@@ -543,24 +543,22 @@ ParsedEvent convert_tdh_to_network(
             break;
         case 12: // Connect
         case 28: // ConnectIPV6
-            result.operation = static_cast<uint8_t>(event::NetworkOp::Connect);
-            break;
-        case 13: // Disconnect
+        case 13: // Disconnect (map to Connect)
         case 29: // DisconnectIPV6
-            result.operation = static_cast<uint8_t>(event::NetworkOp::Disconnect);
+            result.operation = static_cast<uint8_t>(event::NetworkOp::Connect);
             break;
         default:
             result.valid = false;
             return result;
     }
     
-    // Extract network fields
-    result.payload.network.src_port = static_cast<uint16_t>(
+    // Extract network fields with correct payload member names
+    result.payload.network.local_port = static_cast<uint16_t>(
         get_uint32_prop(tdh_event, L"sport"));
-    result.payload.network.dst_port = static_cast<uint16_t>(
+    result.payload.network.remote_port = static_cast<uint16_t>(
         get_uint32_prop(tdh_event, L"dport"));
-    result.payload.network.src_addr = get_uint32_prop(tdh_event, L"saddr");
-    result.payload.network.dst_addr = get_uint32_prop(tdh_event, L"daddr");
+    result.payload.network.local_addr = get_uint32_prop(tdh_event, L"saddr");
+    result.payload.network.remote_addr = get_uint32_prop(tdh_event, L"daddr");
     
     result.valid = true;
     return result;
@@ -586,8 +584,8 @@ ParsedEvent convert_tdh_to_image(
     
     // Extract image base and size
     result.payload.image.base_address = get_uint64_prop(tdh_event, L"ImageBase");
-    result.payload.image.size = get_uint64_prop(tdh_event, L"ImageSize");
-    result.payload.image.target_pid = get_uint32_prop(tdh_event, L"ProcessId");
+    result.payload.image.size = static_cast<uint32_t>(get_uint64_prop(tdh_event, L"ImageSize"));
+    result.payload.image.process_id = get_uint32_prop(tdh_event, L"ProcessId");
     
     // Extract image path
     std::wstring path = get_wstring_prop(tdh_event, L"FileName");
@@ -600,7 +598,7 @@ ParsedEvent convert_tdh_to_image(
         result.payload.image.image_path = event::INVALID_STRING;
     }
     
-    result.payload.image.is_suspicious = false;
+    result.payload.image.is_suspicious = 0;
     result.valid = true;
     return result;
 }
@@ -629,14 +627,14 @@ ParsedEvent convert_tdh_to_thread(
     if (result.payload.thread.thread_id == 0) {
         result.payload.thread.thread_id = get_uint32_prop(tdh_event, L"ThreadId");
     }
-    result.payload.thread.target_pid = get_uint32_prop(tdh_event, L"ProcessId");
+    result.payload.thread.process_id = get_uint32_prop(tdh_event, L"ProcessId");
     result.payload.thread.creator_pid = get_uint32_prop(tdh_event, L"StackProcess");
     result.payload.thread.start_address = get_uint64_prop(tdh_event, L"Win32StartAddr");
     
     // Detect remote thread injection
     result.payload.thread.is_remote = 
         (result.payload.thread.creator_pid != 0 &&
-         result.payload.thread.target_pid != result.payload.thread.creator_pid);
+         result.payload.thread.process_id != result.payload.thread.creator_pid) ? 1 : 0;
     
     result.valid = true;
     return result;
@@ -661,16 +659,16 @@ ParsedEvent convert_tdh_to_memory(
     }
     
     result.payload.memory.base_address = get_uint64_prop(tdh_event, L"BaseAddress");
-    result.payload.memory.region_size = get_uint64_prop(tdh_event, L"RegionSize");
-    result.payload.memory.target_pid = get_uint32_prop(tdh_event, L"ProcessId");
+    result.payload.memory.region_size = static_cast<uint32_t>(get_uint64_prop(tdh_event, L"RegionSize"));
+    result.payload.memory.process_id = get_uint32_prop(tdh_event, L"ProcessId");
     result.payload.memory.protection = get_uint32_prop(tdh_event, L"Flags");
     
-    // Detect RWX allocations
-    constexpr uint32_t PAGE_EXECUTE_READWRITE = 0x40;
-    constexpr uint32_t PAGE_EXECUTE_WRITECOPY = 0x80;
-    result.payload.memory.is_rwx = 
-        (result.payload.memory.protection == PAGE_EXECUTE_READWRITE ||
-         result.payload.memory.protection == PAGE_EXECUTE_WRITECOPY);
+    // Detect RWX allocations (using constants, not Windows macros)
+    constexpr uint32_t kPageExecuteReadWrite = 0x40;
+    constexpr uint32_t kPageExecuteWriteCopy = 0x80;
+    result.payload.memory.is_suspicious = 
+        (result.payload.memory.protection == kPageExecuteReadWrite ||
+         result.payload.memory.protection == kPageExecuteWriteCopy) ? 1 : 0;
     
     result.valid = true;
     return result;
@@ -694,19 +692,19 @@ ParsedEvent convert_tdh_to_script(
             return result;
     }
     
-    // Extract script content
+    // Extract script content -> script_block
     std::wstring content = get_wstring_prop(tdh_event, L"ScriptBlockText");
     if (content.empty()) {
         content = get_wstring_prop(tdh_event, L"ContextInfo");
     }
     if (!content.empty() && strings != nullptr) {
-        result.payload.script.content = strings->intern_wide(content);
+        result.payload.script.script_block = strings->intern_wide(content);
     } else {
-        result.payload.script.content = event::INVALID_STRING;
+        result.payload.script.script_block = event::INVALID_STRING;
     }
     
-    result.payload.script.script_path = event::INVALID_STRING;
-    result.payload.script.is_suspicious = false;
+    result.payload.script.context = event::INVALID_STRING;
+    result.payload.script.is_suspicious = 0;
     
     result.valid = true;
     return result;
@@ -742,12 +740,6 @@ ParsedEvent convert_tdh_to_amsi(
     result.payload.amsi.scan_result = get_uint32_prop(tdh_event, L"scanResult");
     result.payload.amsi.content_size = get_uint32_prop(tdh_event, L"contentSize");
     
-    // Detect bypass (empty content but success) or malware
-    result.payload.amsi.is_bypass = 
-        (result.payload.amsi.content_size == 0 && 
-         result.payload.amsi.scan_result == 0);
-    result.payload.amsi.is_malware = (result.payload.amsi.scan_result >= 32768);
-    
     result.valid = true;
     return result;
 }
@@ -766,25 +758,24 @@ ParsedEvent convert_tdh_to_dns(
         case 3006: result.operation = static_cast<uint8_t>(event::DnsOp::Response); break;
         case 3008: 
             result.operation = static_cast<uint8_t>(event::DnsOp::Failure);
-            result.status = event::Status::Failure;
+            result.status = event::Status::Error;
             break;
         default:
             result.valid = false;
             return result;
     }
     
-    // Extract query name
+    // Extract query name -> domain
     std::wstring query_name = get_wstring_prop(tdh_event, L"QueryName");
     if (!query_name.empty() && strings != nullptr) {
-        result.payload.dns.query_name = strings->intern_wide(query_name);
+        result.payload.dns.domain = strings->intern_wide(query_name);
     } else {
-        result.payload.dns.query_name = event::INVALID_STRING;
+        result.payload.dns.domain = event::INVALID_STRING;
     }
     
-    result.payload.dns.query_type = static_cast<uint16_t>(
-        get_uint32_prop(tdh_event, L"QueryType"));
+    result.payload.dns.query_type = get_uint32_prop(tdh_event, L"QueryType");
     result.payload.dns.resolved_ip = get_uint32_prop(tdh_event, L"QueryResults");
-    result.payload.dns.is_suspicious = false; // Would need entropy calc
+    result.payload.dns.is_suspicious = 0;
     
     result.valid = true;
     return result;
@@ -807,7 +798,7 @@ ParsedEvent convert_tdh_to_security(
         case 4625:
             result.category = event::Category::Security;
             result.operation = static_cast<uint8_t>(event::SecurityOp::LogonFailed);
-            result.status = event::Status::Failure;
+            result.status = event::Status::Error;
             break;
         case 4688:
             result.category = event::Category::Security;
@@ -831,29 +822,33 @@ ParsedEvent convert_tdh_to_security(
             return result;
     }
     
-    // Extract account info
-    std::wstring account = get_wstring_prop(tdh_event, L"TargetUserName");
-    if (account.empty()) {
-        account = get_wstring_prop(tdh_event, L"SubjectUserName");
-    }
-    if (!account.empty() && strings != nullptr) {
-        result.payload.security.account_name = strings->intern_wide(account);
+    // Extract account info -> subject_user
+    std::wstring subject = get_wstring_prop(tdh_event, L"SubjectUserName");
+    if (!subject.empty() && strings != nullptr) {
+        result.payload.security.subject_user = strings->intern_wide(subject);
     } else {
-        result.payload.security.account_name = event::INVALID_STRING;
+        result.payload.security.subject_user = event::INVALID_STRING;
     }
     
-    std::wstring domain = get_wstring_prop(tdh_event, L"TargetDomainName");
-    if (domain.empty()) {
-        domain = get_wstring_prop(tdh_event, L"SubjectDomainName");
-    }
-    if (!domain.empty() && strings != nullptr) {
-        result.payload.security.domain_name = strings->intern_wide(domain);
+    // Extract target user
+    std::wstring target = get_wstring_prop(tdh_event, L"TargetUserName");
+    if (!target.empty() && strings != nullptr) {
+        result.payload.security.target_user = strings->intern_wide(target);
     } else {
-        result.payload.security.domain_name = event::INVALID_STRING;
+        result.payload.security.target_user = event::INVALID_STRING;
+    }
+    
+    // Command line for process create
+    std::wstring cmd = get_wstring_prop(tdh_event, L"CommandLine");
+    if (!cmd.empty() && strings != nullptr) {
+        result.payload.security.command_line = strings->intern_wide(cmd);
+    } else {
+        result.payload.security.command_line = event::INVALID_STRING;
     }
     
     result.payload.security.logon_type = get_uint32_prop(tdh_event, L"LogonType");
-    result.payload.security.is_suspicious = false;
+    result.payload.security.process_id = get_uint32_prop(tdh_event, L"NewProcessId");
+    result.payload.security.is_suspicious = 0;
     
     result.valid = true;
     return result;
@@ -942,12 +937,19 @@ ParsedEvent convert_tdh_to_clr(
         result.payload.clr.assembly_name = event::INVALID_STRING;
     }
     
-    result.payload.clr.clr_instance_id = static_cast<uint16_t>(
-        get_uint32_prop(tdh_event, L"ClrInstanceID"));
+    // Extract method name for JIT events
+    std::wstring method_name = get_wstring_prop(tdh_event, L"MethodName");
+    if (!method_name.empty() && strings != nullptr) {
+        result.payload.clr.method_name = strings->intern_wide(method_name);
+    } else {
+        result.payload.clr.method_name = event::INVALID_STRING;
+    }
+    
+    result.payload.clr.load_address = get_uint64_prop(tdh_event, L"ModuleILPath");
     
     // Detect dynamic assembly (no file path)
     result.payload.clr.is_dynamic = (assembly_name.find(L"\\") == std::wstring::npos &&
-                                      assembly_name.find(L"/") == std::wstring::npos);
+                                      assembly_name.find(L"/") == std::wstring::npos) ? 1 : 0;
     result.payload.clr.is_suspicious = result.payload.clr.is_dynamic;
     
     result.valid = true;
