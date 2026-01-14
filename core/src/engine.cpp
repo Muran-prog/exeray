@@ -12,11 +12,11 @@ namespace exeray {
 
 namespace {
 
-/// @brief Map provider name to GUID.
+#ifdef _WIN32
+/// @brief Map provider name to GUID (Windows implementation).
 /// @param name Provider name (e.g., "Process", "File").
 /// @return GUID if known, nullopt otherwise.
-std::optional<etw::GUID> get_provider_guid([[maybe_unused]] std::string_view name) {
-#ifdef _WIN32
+std::optional<GUID> get_provider_guid(std::string_view name) {
     // Static registry of provider name → GUID mappings
     if (name == "Process") return etw::providers::KERNEL_PROCESS;
     if (name == "File") return etw::providers::KERNEL_FILE;
@@ -31,9 +31,14 @@ std::optional<etw::GUID> get_provider_guid([[maybe_unused]] std::string_view nam
     if (name == "WMI") return etw::providers::WMI_ACTIVITY;
     if (name == "CLR") return etw::providers::CLR_RUNTIME;
     if (name == "Security") return etw::providers::SECURITY_AUDITING;
-#endif
     return std::nullopt;
 }
+#else
+/// @brief Stub for non-Windows platforms.
+std::optional<etw::GUID> get_provider_guid([[maybe_unused]] std::string_view name) {
+    return std::nullopt;  // ETW not available on non-Windows
+}
+#endif
 
 }  // namespace
 
