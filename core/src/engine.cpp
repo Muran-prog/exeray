@@ -48,8 +48,12 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
     // Store target PID for event filtering
     target_pid_.store(target_->pid(), std::memory_order_release);
 
-    // Step 2: Create ETW session
-    etw_session_ = etw::Session::create(L"ExeRayMonitor");
+    // Step 2: Create ETW session with callback and context
+    etw_session_ = etw::Session::create(
+        L"ExeRayMonitor",
+        etw::event_record_callback,
+        &consumer_ctx_
+    );
     if (!etw_session_) {
         std::cerr << "Engine: Failed to create ETW session\n";
         target_.reset();

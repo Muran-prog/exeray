@@ -30,18 +30,29 @@ namespace exeray::etw {
 ///
 /// Usage:
 /// @code
-///     auto session = Session::create(L"MyAppTrace");
+///     void WINAPI my_callback(PEVENT_RECORD record) { ... }
+///     ConsumerContext ctx{&graph, &target_pid};
+///     auto session = Session::create(L"MyAppTrace", my_callback, &ctx);
 ///     if (session) {
 ///         session->enable_provider(providers::KERNEL_FILE, TRACE_LEVEL_INFORMATION, 0);
-///         // Use session->trace_handle() with ProcessTrace
+///         // Start consumer thread that calls ProcessTrace
 ///     }
 /// @endcode
 class Session {
 public:
-    /// @brief Create a new ETW session with the given name.
+    /// @brief Callback type for event records.
+    using EventCallback = void(WINAPI*)(PEVENT_RECORD);
+
+    /// @brief Create a new ETW session with callback for event consumption.
     /// @param session_name Unique name for the session (max 1024 chars).
+    /// @param callback Event callback function invoked for each event.
+    /// @param context User context passed to callback via EVENT_RECORD::UserContext.
     /// @return Unique pointer to the session, or nullptr on failure.
-    static std::unique_ptr<Session> create(std::wstring_view session_name);
+    static std::unique_ptr<Session> create(
+        std::wstring_view session_name,
+        EventCallback callback,
+        void* context
+    );
 
     /// @brief Destructor - stops the trace session and releases resources.
     ~Session();
@@ -133,7 +144,13 @@ constexpr TRACEHANDLE INVALID_PROCESSTRACE_HANDLE = static_cast<TRACEHANDLE>(-1)
 
 class Session {
 public:
-    static std::unique_ptr<Session> create(std::wstring_view /*session_name*/) {
+    using EventCallback = void(*)(void*);
+
+    static std::unique_ptr<Session> create(
+        std::wstring_view /*session_name*/,
+        EventCallback /*callback*/ = nullptr,
+        void* /*context*/ = nullptr
+    ) {
         return nullptr;  // ETW not available on non-Windows
     }
 

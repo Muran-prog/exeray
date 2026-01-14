@@ -37,9 +37,18 @@ constexpr size_t properties_buffer_size() {
 
 }  // namespace
 
-std::unique_ptr<Session> Session::create(std::wstring_view session_name) {
+std::unique_ptr<Session> Session::create(
+    std::wstring_view session_name,
+    EventCallback callback,
+    void* context
+) {
     if (session_name.empty() || session_name.size() >= 1024) {
         std::fwprintf(stderr, L"[ETW] Invalid session name length\n");
+        return nullptr;
+    }
+
+    if (callback == nullptr) {
+        std::fwprintf(stderr, L"[ETW] Event callback is required\n");
         return nullptr;
     }
 
@@ -97,10 +106,12 @@ std::unique_ptr<Session> Session::create(std::wstring_view session_name) {
         }
     }
 
-    // Open the trace for consumption
+    // Open the trace for consumption with callback and context
     EVENT_TRACE_LOGFILEW logfile{};
     logfile.LoggerName = const_cast<LPWSTR>(name_str.c_str());
     logfile.ProcessTraceMode = PROCESS_TRACE_MODE_REAL_TIME | PROCESS_TRACE_MODE_EVENT_RECORD;
+    logfile.EventRecordCallback = callback;
+    logfile.Context = context;
 
     TRACEHANDLE trace_handle = OpenTraceW(&logfile);
     if (trace_handle == INVALID_PROCESSTRACE_HANDLE) {
