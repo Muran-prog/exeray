@@ -1,5 +1,0 @@
-if(EXISTS "/home/mark/ExeRay/build/core/string_pool_test[1]_tests.cmake")
-  include("/home/mark/ExeRay/build/core/string_pool_test[1]_tests.cmake")
-else()
-  add_test(string_pool_test_NOT_BUILT string_pool_test_NOT_BUILT)
-endif()
