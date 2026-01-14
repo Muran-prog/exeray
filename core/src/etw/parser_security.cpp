@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <mutex>
+#include <algorithm>
 
 namespace exeray::etw {
 
@@ -355,7 +356,7 @@ ParsedEvent parse_process_create(const EVENT_RECORD* record,
     }
     std::fprintf(stderr, ", cmdline=");
     // Truncate long command lines for logging
-    size_t log_len = std::min(command_line.size(), size_t(100));
+    size_t log_len = (std::min)(command_line.size(), size_t(100));
     for (size_t i = 0; i < log_len; ++i) {
         std::fputc(static_cast<char>(command_line[i] & 0x7F), stderr);
     }
@@ -487,7 +488,7 @@ ParsedEvent parse_service_install(const EVENT_RECORD* record,
         std::fputc(static_cast<char>(c & 0x7F), stderr);
     }
     std::fprintf(stderr, ", path=");
-    size_t log_len = std::min(service_path.size(), size_t(80));
+    size_t log_len = (std::min)(service_path.size(), size_t(80));
     for (size_t i = 0; i < log_len; ++i) {
         std::fputc(static_cast<char>(service_path[i] & 0x7F), stderr);
     }
@@ -560,7 +561,7 @@ ParsedEvent parse_token_rights(const EVENT_RECORD* record,
             std::fputc(static_cast<char>(c & 0x7F), stderr);
         }
         std::fprintf(stderr, ", privs=");
-        size_t log_len = std::min(enabled_privs.size(), size_t(100));
+        size_t log_len = (std::min)(enabled_privs.size(), size_t(100));
         for (size_t i = 0; i < log_len; ++i) {
             std::fputc(static_cast<char>(enabled_privs[i] & 0x7F), stderr);
         }
