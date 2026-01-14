@@ -10,6 +10,11 @@ add_library(exeray_core STATIC
     src/event/string_pool.cpp
     src/event/graph.cpp
     src/etw/session.cpp
+    src/etw/parser_process.cpp
+    src/etw/parser_file.cpp
+    src/etw/parser_registry.cpp
+    src/etw/parser_network.cpp
+    src/etw/parser_dispatch.cpp
 )
 
 target_include_directories(exeray_core PUBLIC
@@ -22,9 +27,9 @@ target_compile_options(exeray_core PRIVATE
     $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-O3>
 )
 
-# Windows ETW requires advapi32
+# Windows ETW requires advapi32 and tdh
 if(WIN32)
-    target_link_libraries(exeray_core PRIVATE advapi32)
+    target_link_libraries(exeray_core PRIVATE advapi32 tdh)
 endif()
 
 install(TARGETS exeray_core
