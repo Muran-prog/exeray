@@ -134,6 +134,7 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record, event::StringPool
 /// - AMSI → parse_amsi_event
 /// - DNS_CLIENT → parse_dns_event
 /// - SECURITY_AUDITING → parse_security_event
+/// - WMI_ACTIVITY → parse_wmi_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Antimalware-Scan-Interface event.
@@ -167,6 +168,18 @@ ParsedEvent parse_dns_event(const EVENT_RECORD* record, event::StringPool* strin
 /// - Event ID 4697: Service Install → ServiceOp::Install (AUTO_START = suspicious)
 /// - Event ID 4703: Token Rights → SecurityOp::PrivilegeAdjust (SeDebugPrivilege = suspicious)
 ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* strings);
+
+/// @brief Parse a Microsoft-Windows-WMI-Activity event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with WMI operation details.
+///
+/// Handles:
+/// - Event ID 5: Namespace Connect → WmiOp::Connect
+/// - Event ID 11: ExecQuery → WmiOp::Query
+/// - Event ID 22: ExecNotificationQuery → WmiOp::Subscribe (persistence!)
+/// - Event ID 23: ExecMethod → WmiOp::ExecMethod (Win32_Process.Create!)
+/// Detects remote WMI (lateral movement) and suspicious patterns.
+ParsedEvent parse_wmi_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 }  // namespace exeray::etw
 
@@ -237,6 +250,10 @@ inline ParsedEvent parse_dns_event(const EVENT_RECORD* /*record*/, event::String
 }
 
 inline ParsedEvent parse_security_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_wmi_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 

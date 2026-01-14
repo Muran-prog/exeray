@@ -60,6 +60,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* string
     if (guid_equal(provider, providers::SECURITY_AUDITING)) {
         return parse_security_event(record, strings);
     }
+    if (guid_equal(provider, providers::WMI_ACTIVITY)) {
+        return parse_wmi_event(record, strings);
+    }
 
     // Unknown provider - return invalid
     return ParsedEvent{.valid = false};

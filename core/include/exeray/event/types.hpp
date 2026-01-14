@@ -57,6 +57,7 @@ enum class Category : std::uint8_t {
     Dns,          ///< DNS query operations
     Security,     ///< Security auditing events (logon, privilege changes)
     Service,      ///< Windows service operations
+    Wmi,          ///< WMI operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -219,6 +220,19 @@ enum class ServiceOp : std::uint8_t {
     Delete    ///< Service deleted
 };
 
+/**
+ * @brief WMI operation types.
+ *
+ * Tracks WMI activity for lateral movement, persistence, and 
+ * fileless execution detection.
+ */
+enum class WmiOp : std::uint8_t {
+    Query,       ///< WMI/WQL query executed
+    ExecMethod,  ///< Method execution (Win32_Process.Create!)
+    Subscribe,   ///< Event subscription (persistence!)
+    Connect      ///< Namespace connection
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -254,6 +268,7 @@ static_assert(sizeof(AmsiOp) == 1, "AmsiOp must be 1 byte");
 static_assert(sizeof(DnsOp) == 1, "DnsOp must be 1 byte");
 static_assert(sizeof(SecurityOp) == 1, "SecurityOp must be 1 byte");
 static_assert(sizeof(ServiceOp) == 1, "ServiceOp must be 1 byte");
+static_assert(sizeof(WmiOp) == 1, "WmiOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -287,6 +302,8 @@ static_assert(std::is_trivially_copyable_v<SecurityOp>,
               "SecurityOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ServiceOp>,
               "ServiceOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<WmiOp>,
+              "WmiOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

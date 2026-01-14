@@ -211,6 +211,22 @@ struct ServicePayload {
     uint8_t _pad[3];         ///< Explicit padding
 };
 
+/**
+ * @brief Payload for WMI operations.
+ *
+ * Contains WMI activity details for attack detection including
+ * lateral movement, persistence via Event Subscriptions, and
+ * fileless execution via Win32_Process.Create.
+ */
+struct WmiPayload {
+    StringId wmi_namespace;  ///< root\cimv2, etc.
+    StringId query;          ///< WQL query or method name
+    StringId target_host;    ///< Remote host if any
+    uint8_t is_remote;       ///< 1 if not localhost
+    uint8_t is_suspicious;   ///< 1 if dangerous pattern
+    uint8_t _pad[2];         ///< Explicit padding
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -248,6 +264,7 @@ struct EventPayload {
         DnsPayload dns;             ///< Active when category == Dns
         SecurityPayload security;   ///< Active when category == Security
         ServicePayload service;     ///< Active when category == Service
+        WmiPayload wmi;             ///< Active when category == Wmi
     };
 };
 
@@ -283,6 +300,8 @@ static_assert(sizeof(SecurityPayload) == 24,
               "SecurityPayload must be 24 bytes");
 static_assert(sizeof(ServicePayload) == 20,
               "ServicePayload must be 20 bytes");
+static_assert(sizeof(WmiPayload) == 16,
+              "WmiPayload must be 16 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -319,6 +338,8 @@ static_assert(std::is_trivially_copyable_v<SecurityPayload>,
               "SecurityPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ServicePayload>,
               "ServicePayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<WmiPayload>,
+              "WmiPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

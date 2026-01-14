@@ -313,7 +313,12 @@ const GUID SECURITY_AUDITING = {
     {0xA5, 0xBA, 0x3E, 0x3B, 0x03, 0x28, 0xC3, 0x0D}
 };
 
-}  // namespace providers
+// Microsoft-Windows-WMI-Activity
+// {1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}
+const GUID WMI_ACTIVITY = {
+    0x1418EF04, 0xB0B4, 0x4623,
+    {0xBF, 0x7E, 0xD7, 0x4A, 0xB4, 0x7B, 0xBD, 0xAA}
+};
 
 }  // namespace exeray::etw
 
@@ -335,6 +340,7 @@ const GUID POWERSHELL = {0, 0, 0, {0}};
 const GUID AMSI = {0, 0, 0, {0}};
 const GUID DNS_CLIENT = {0, 0, 0, {0}};
 const GUID SECURITY_AUDITING = {0, 0, 0, {0}};
+const GUID WMI_ACTIVITY = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

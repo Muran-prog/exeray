@@ -152,6 +152,11 @@ extern const GUID DNS_CLIENT;
 /// Traces security events: logon, privilege changes, service installation.
 extern const GUID SECURITY_AUDITING;
 
+/// Microsoft-Windows-WMI-Activity provider
+/// GUID: {1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}
+/// Traces WMI queries and method executions for attack detection.
+extern const GUID WMI_ACTIVITY;
+
 /// PowerShell keywords for event filtering.
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
@@ -236,6 +241,7 @@ extern const GUID POWERSHELL;
 extern const GUID AMSI;
 extern const GUID DNS_CLIENT;
 extern const GUID SECURITY_AUDITING;
+extern const GUID WMI_ACTIVITY;
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;
     constexpr uint64_t PIPELINE = 0x20;
