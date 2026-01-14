@@ -137,6 +137,11 @@ extern const GUID KERNEL_MEMORY;
 /// Traces PowerShell script execution for fileless malware detection.
 extern const GUID POWERSHELL;
 
+/// Microsoft-Antimalware-Scan-Interface provider
+/// GUID: {2A576B87-09A7-520E-C21A-4942F0271D67}
+/// Traces AMSI scan requests for bypass detection.
+extern const GUID AMSI;
+
 /// PowerShell keywords for event filtering.
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
@@ -218,6 +223,7 @@ extern const GUID KERNEL_IMAGE;
 extern const GUID KERNEL_THREAD;
 extern const GUID KERNEL_MEMORY;
 extern const GUID POWERSHELL;
+extern const GUID AMSI;
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;
     constexpr uint64_t PIPELINE = 0x20;

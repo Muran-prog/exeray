@@ -53,6 +53,7 @@ enum class Category : std::uint8_t {
     Thread,       ///< Thread creation/termination operations
     Memory,       ///< Virtual memory allocation operations
     Script,       ///< PowerShell script execution operations
+    Amsi,         ///< AMSI scan operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -168,6 +169,16 @@ enum class ScriptOp : std::uint8_t {
     Module    ///< Module/cmdlet invoked (Event 4103)
 };
 
+/**
+ * @brief AMSI scan operation types.
+ *
+ * Tracks AMSI scans for bypass detection.
+ */
+enum class AmsiOp : std::uint8_t {
+    Scan,     ///< AmsiScanBuffer/String called
+    Session   ///< AmsiOpenSession/CloseSession
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -199,6 +210,7 @@ static_assert(sizeof(ImageOp) == 1, "ImageOp must be 1 byte");
 static_assert(sizeof(ThreadOp) == 1, "ThreadOp must be 1 byte");
 static_assert(sizeof(MemoryOp) == 1, "MemoryOp must be 1 byte");
 static_assert(sizeof(ScriptOp) == 1, "ScriptOp must be 1 byte");
+static_assert(sizeof(AmsiOp) == 1, "AmsiOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -224,6 +236,8 @@ static_assert(std::is_trivially_copyable_v<MemoryOp>,
               "MemoryOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ScriptOp>,
               "ScriptOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<AmsiOp>,
+              "AmsiOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

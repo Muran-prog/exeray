@@ -51,6 +51,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record) {
     if (guid_equal(provider, providers::POWERSHELL)) {
         return parse_powershell_event(record);
     }
+    if (guid_equal(provider, providers::AMSI)) {
+        return parse_amsi_event(record);
+    }
 
     // Unknown provider - return invalid
     return ParsedEvent{.valid = false};

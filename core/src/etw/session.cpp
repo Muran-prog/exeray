@@ -292,6 +292,13 @@ const GUID POWERSHELL = {
     {0x87, 0x66, 0x3C, 0xF1, 0xC5, 0x8F, 0x98, 0x5A}
 };
 
+// Microsoft-Antimalware-Scan-Interface
+// {2A576B87-09A7-520E-C21A-4942F0271D67}
+const GUID AMSI = {
+    0x2A576B87, 0x09A7, 0x520E,
+    {0xC2, 0x1A, 0x49, 0x42, 0xF0, 0x27, 0x1D, 0x67}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -311,6 +318,7 @@ const GUID KERNEL_IMAGE = {0, 0, 0, {0}};
 const GUID KERNEL_THREAD = {0, 0, 0, {0}};
 const GUID KERNEL_MEMORY = {0, 0, 0, {0}};
 const GUID POWERSHELL = {0, 0, 0, {0}};
+const GUID AMSI = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

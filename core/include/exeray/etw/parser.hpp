@@ -127,7 +127,17 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record);
 /// - KERNEL_THREAD → parse_thread_event
 /// - KERNEL_MEMORY → parse_memory_event
 /// - POWERSHELL → parse_powershell_event
+/// - AMSI → parse_amsi_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record);
+
+/// @brief Parse a Microsoft-Antimalware-Scan-Interface event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with AMSI scan details.
+///
+/// Handles:
+/// - Event ID 1101: AmsiScanBuffer → AmsiOp::Scan
+/// Detects bypass attempts (empty content) and malware results.
+ParsedEvent parse_amsi_event(const EVENT_RECORD* record);
 
 }  // namespace exeray::etw
 
@@ -182,6 +192,10 @@ inline ParsedEvent parse_memory_event(const EVENT_RECORD* /*record*/) {
 }
 
 inline ParsedEvent parse_powershell_event(const EVENT_RECORD* /*record*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_amsi_event(const EVENT_RECORD* /*record*/) {
     return ParsedEvent{.valid = false};
 }
 

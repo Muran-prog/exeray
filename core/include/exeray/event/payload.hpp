@@ -152,6 +152,19 @@ struct ScriptPayload {
     uint8_t _pad[3];         ///< Explicit padding for alignment
 };
 
+/**
+ * @brief Payload for AMSI scan operations.
+ *
+ * Contains scanned content info for bypass/malware detection.
+ * Used for detecting AMSI bypass attempts (empty content after PowerShell).
+ */
+struct AmsiPayload {
+    StringId content;        ///< Interned scanned content (truncated)
+    StringId app_name;       ///< Interned requesting application name
+    uint32_t scan_result;    ///< AMSI_RESULT_* value
+    uint32_t content_size;   ///< Original content size in bytes
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -185,6 +198,7 @@ struct EventPayload {
         ThreadPayload thread;       ///< Active when category == Thread
         MemoryPayload memory;       ///< Active when category == Memory
         ScriptPayload script;       ///< Active when category == Script
+        AmsiPayload amsi;           ///< Active when category == Amsi
     };
 };
 
@@ -212,6 +226,8 @@ static_assert(sizeof(MemoryPayload) == 24,
               "MemoryPayload must be 24 bytes");
 static_assert(sizeof(ScriptPayload) == 16,
               "ScriptPayload must be 16 bytes");
+static_assert(sizeof(AmsiPayload) == 16,
+              "AmsiPayload must be 16 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -240,6 +256,8 @@ static_assert(std::is_trivially_copyable_v<MemoryPayload>,
               "MemoryPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ScriptPayload>,
               "ScriptPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<AmsiPayload>,
+              "AmsiPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 
