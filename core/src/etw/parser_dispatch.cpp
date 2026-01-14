@@ -48,6 +48,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record) {
     if (guid_equal(provider, providers::KERNEL_MEMORY)) {
         return parse_memory_event(record);
     }
+    if (guid_equal(provider, providers::POWERSHELL)) {
+        return parse_powershell_event(record);
+    }
 
     // Unknown provider - return invalid
     return ParsedEvent{.valid = false};

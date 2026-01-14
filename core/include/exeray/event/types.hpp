@@ -52,6 +52,7 @@ enum class Category : std::uint8_t {
     Image,        ///< DLL/EXE image load/unload operations
     Thread,       ///< Thread creation/termination operations
     Memory,       ///< Virtual memory allocation operations
+    Script,       ///< PowerShell script execution operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -157,6 +158,16 @@ enum class MemoryOp : std::uint8_t {
     Free      ///< VirtualFree
 };
 
+/**
+ * @brief PowerShell script operation types.
+ *
+ * Tracks script execution for fileless malware detection.
+ */
+enum class ScriptOp : std::uint8_t {
+    Execute,  ///< Script block executed (Event 4104)
+    Module    ///< Module/cmdlet invoked (Event 4103)
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -187,6 +198,7 @@ static_assert(sizeof(InputOp) == 1, "InputOp must be 1 byte");
 static_assert(sizeof(ImageOp) == 1, "ImageOp must be 1 byte");
 static_assert(sizeof(ThreadOp) == 1, "ThreadOp must be 1 byte");
 static_assert(sizeof(MemoryOp) == 1, "MemoryOp must be 1 byte");
+static_assert(sizeof(ScriptOp) == 1, "ScriptOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -210,6 +222,8 @@ static_assert(std::is_trivially_copyable_v<ThreadOp>,
               "ThreadOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<MemoryOp>,
               "MemoryOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ScriptOp>,
+              "ScriptOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

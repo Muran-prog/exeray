@@ -132,6 +132,19 @@ extern const GUID KERNEL_THREAD;
 /// Traces VirtualAlloc/VirtualFree for RWX shellcode detection.
 extern const GUID KERNEL_MEMORY;
 
+/// Microsoft-Windows-PowerShell provider
+/// GUID: {A0C1853B-5C40-4B15-8766-3CF1C58F985A}
+/// Traces PowerShell script execution for fileless malware detection.
+extern const GUID POWERSHELL;
+
+/// PowerShell keywords for event filtering.
+namespace powershell_keywords {
+    constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
+    constexpr uint64_t PIPELINE = 0x20;   ///< Pipeline execution
+    constexpr uint64_t CMDLETS  = 0x40;   ///< Cmdlet invocation
+    constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
+}  // namespace powershell_keywords
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -204,6 +217,13 @@ extern const GUID KERNEL_NETWORK;
 extern const GUID KERNEL_IMAGE;
 extern const GUID KERNEL_THREAD;
 extern const GUID KERNEL_MEMORY;
+extern const GUID POWERSHELL;
+namespace powershell_keywords {
+    constexpr uint64_t RUNSPACE = 0x10;
+    constexpr uint64_t PIPELINE = 0x20;
+    constexpr uint64_t CMDLETS  = 0x40;
+    constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
+}
 }  // namespace providers
 
 }  // namespace exeray::etw

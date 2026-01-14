@@ -138,6 +138,20 @@ struct MemoryPayload {
     uint8_t _pad[3];         ///< Explicit padding for alignment
 };
 
+/**
+ * @brief Payload for PowerShell script operations.
+ *
+ * Contains script content and context for fileless malware detection.
+ * Used for Script Block Logging (Event 4104) and Module Logging (Event 4103).
+ */
+struct ScriptPayload {
+    StringId script_block;   ///< Interned script content
+    StringId context;        ///< Host application, RunspaceId
+    uint32_t sequence;       ///< Sequence number for multi-part scripts
+    uint8_t is_suspicious;   ///< 1 if dangerous patterns detected
+    uint8_t _pad[3];         ///< Explicit padding for alignment
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -170,6 +184,7 @@ struct EventPayload {
         ImagePayload image;         ///< Active when category == Image
         ThreadPayload thread;       ///< Active when category == Thread
         MemoryPayload memory;       ///< Active when category == Memory
+        ScriptPayload script;       ///< Active when category == Script
     };
 };
 
@@ -195,6 +210,8 @@ static_assert(sizeof(ThreadPayload) == 24,
               "ThreadPayload must be 24 bytes");
 static_assert(sizeof(MemoryPayload) == 24,
               "MemoryPayload must be 24 bytes");
+static_assert(sizeof(ScriptPayload) == 16,
+              "ScriptPayload must be 16 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -221,6 +238,8 @@ static_assert(std::is_trivially_copyable_v<ThreadPayload>,
               "ThreadPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<MemoryPayload>,
               "MemoryPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ScriptPayload>,
+              "ScriptPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

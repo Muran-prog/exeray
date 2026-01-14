@@ -285,6 +285,13 @@ const GUID KERNEL_MEMORY = {
     {0x9D, 0xDA, 0x00, 0xC0, 0x4F, 0xD7, 0xBA, 0x7C}
 };
 
+// Microsoft-Windows-PowerShell
+// {A0C1853B-5C40-4B15-8766-3CF1C58F985A}
+const GUID POWERSHELL = {
+    0xA0C1853B, 0x5C40, 0x4B15,
+    {0x87, 0x66, 0x3C, 0xF1, 0xC5, 0x8F, 0x98, 0x5A}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -303,6 +310,7 @@ const GUID KERNEL_NETWORK = {0, 0, 0, {0}};
 const GUID KERNEL_IMAGE = {0, 0, 0, {0}};
 const GUID KERNEL_THREAD = {0, 0, 0, {0}};
 const GUID KERNEL_MEMORY = {0, 0, 0, {0}};
+const GUID POWERSHELL = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

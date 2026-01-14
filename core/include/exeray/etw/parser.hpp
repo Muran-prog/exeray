@@ -104,6 +104,16 @@ ParsedEvent parse_thread_event(const EVENT_RECORD* record);
 /// Detects RWX allocations (PAGE_EXECUTE_READWRITE/WRITECOPY).
 ParsedEvent parse_memory_event(const EVENT_RECORD* record);
 
+/// @brief Parse a Microsoft-Windows-PowerShell event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with script operation details.
+///
+/// Handles:
+/// - Event ID 4103: Module Logging → ScriptOp::Module
+/// - Event ID 4104: Script Block Logging → ScriptOp::Execute
+/// Detects suspicious patterns (IEX, EncodedCommand, download cradles).
+ParsedEvent parse_powershell_event(const EVENT_RECORD* record);
+
 /// @brief Dispatch an ETW event to the appropriate parser based on provider.
 /// @param record Pointer to the raw ETW event record.
 /// @return ParsedEvent from the matching parser, or invalid if unrecognized.
@@ -116,6 +126,7 @@ ParsedEvent parse_memory_event(const EVENT_RECORD* record);
 /// - KERNEL_IMAGE → parse_image_event
 /// - KERNEL_THREAD → parse_thread_event
 /// - KERNEL_MEMORY → parse_memory_event
+/// - POWERSHELL → parse_powershell_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record);
 
 }  // namespace exeray::etw
@@ -167,6 +178,10 @@ inline ParsedEvent parse_thread_event(const EVENT_RECORD* /*record*/) {
 }
 
 inline ParsedEvent parse_memory_event(const EVENT_RECORD* /*record*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_powershell_event(const EVENT_RECORD* /*record*/) {
     return ParsedEvent{.valid = false};
 }
 
