@@ -320,6 +320,8 @@ const GUID WMI_ACTIVITY = {
     {0xBF, 0x7E, 0xD7, 0x4A, 0xB4, 0x7B, 0xBD, 0xAA}
 };
 
+}  // namespace providers
+
 }  // namespace exeray::etw
 
 #else  // !_WIN32
