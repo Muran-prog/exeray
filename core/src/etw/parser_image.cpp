@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
 
 #include <cstring>
@@ -237,7 +238,10 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record, event::StringPool* str
         case ImageEventId::Unload:
             return parse_image_unload(record, strings);
         default:
-            // Unknown event ID - return invalid
+            // Unknown event ID - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_image(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

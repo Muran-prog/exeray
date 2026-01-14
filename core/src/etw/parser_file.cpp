@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
 
 #include <cstring>
@@ -224,6 +225,10 @@ ParsedEvent parse_file_event(const EVENT_RECORD* record, event::StringPool* stri
         case FileEventId::Delete:
             return parse_file_delete(record, strings);
         default:
+            // Unknown event - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_file(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

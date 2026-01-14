@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
 
 #include <cmath>
@@ -379,7 +380,10 @@ ParsedEvent parse_dns_event(const EVENT_RECORD* record, event::StringPool* strin
         case DnsEventId::QueryFailed:
             return parse_query_failed(record, strings);
         default:
-            // Unknown event ID - return invalid
+            // Unknown event ID - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_dns(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

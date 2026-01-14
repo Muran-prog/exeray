@@ -8,6 +8,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
 
 #include <cstring>
@@ -579,7 +580,10 @@ ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* 
         case SecurityEventId::TokenRights:
             return parse_token_rights(record, strings);
         default:
-            // Unknown security event ID - return invalid
+            // Unknown security event ID - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_security(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

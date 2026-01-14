@@ -36,7 +36,9 @@ add_library(exeray_core STATIC
     src/etw/parser_wmi.cpp
     src/etw/parser_clr.cpp
     src/etw/parser_dispatch.cpp
+    src/etw/tdh_parser.cpp
     src/process/controller.cpp
+
     src/logging.cpp
 )
 

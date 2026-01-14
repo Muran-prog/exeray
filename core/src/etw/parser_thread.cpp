@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 
 #include <cstring>
 
@@ -175,7 +176,7 @@ ParsedEvent parse_thread_dcend(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
+ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -192,7 +193,10 @@ ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* /*
         case ThreadEventId::DCEnd:
             return parse_thread_dcend(record);
         default:
-            // Unknown event ID - return invalid
+            // Unknown event ID - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_thread(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

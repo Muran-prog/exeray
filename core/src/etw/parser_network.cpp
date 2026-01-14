@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 
 #include <cstring>
 
@@ -151,7 +152,7 @@ ParsedEvent parse_udp_event(const EVENT_RECORD* record, event::NetworkOp op) {
 
 }  // namespace
 
-ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
+ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -171,6 +172,10 @@ ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* /
         case NetworkEventId::UdpReceive:
             return parse_udp_event(record, event::NetworkOp::Receive);
         default:
+            // Unknown event - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_network(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }

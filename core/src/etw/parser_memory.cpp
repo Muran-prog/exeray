@@ -5,6 +5,7 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/etw/tdh_parser.hpp"
 #include "exeray/logging.hpp"
 
 #include <cstring>
@@ -200,7 +201,7 @@ ParsedEvent parse_virtual_free(const EVENT_RECORD* record) {
 
 }  // namespace
 
-ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
+ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* strings) {
     if (record == nullptr) {
         return ParsedEvent{.valid = false};
     }
@@ -213,7 +214,10 @@ ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* /*
         case MemoryEventId::VirtualFree:
             return parse_virtual_free(record);
         default:
-            // Unknown event ID - return invalid
+            // Unknown event ID - try TDH fallback
+            if (auto tdh_result = parse_with_tdh(record)) {
+                return convert_tdh_to_memory(*tdh_result, record, strings);
+            }
             return ParsedEvent{.valid = false};
     }
 }
