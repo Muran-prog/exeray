@@ -47,6 +47,19 @@ mod ffi {
         fn event_get_category(handle: &Handle, index: usize) -> u8;
         fn event_get_status(handle: &Handle, index: usize) -> u8;
         fn event_get_operation(handle: &Handle, index: usize) -> u8;
+
+        // Monitoring control
+        fn start_monitoring(self: Pin<&mut Handle>, exe_path: &str) -> bool;
+        fn stop_monitoring(self: Pin<&mut Handle>);
+
+        // Target process control
+        fn freeze_target(self: Pin<&mut Handle>);
+        fn unfreeze_target(self: Pin<&mut Handle>);
+        fn kill_target(self: Pin<&mut Handle>);
+
+        // Target state
+        fn target_pid(self: &Handle) -> u32;
+        fn target_running(self: &Handle) -> bool;
     }
 }
 
@@ -186,6 +199,69 @@ impl Engine {
             count: self.event_count(),
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Monitoring Control
+    // -------------------------------------------------------------------------
+
+    /// Start monitoring a target process.
+    ///
+    /// Launches the executable in suspended mode, creates an ETW session,
+    /// enables kernel providers, and starts event capture.
+    ///
+    /// # Arguments
+    /// * `exe_path` - Path to the executable to launch and monitor (UTF-8).
+    ///
+    /// # Returns
+    /// `true` if monitoring started successfully, `false` on failure.
+    pub fn start_monitoring(&mut self, exe_path: &str) -> bool {
+        self.0.pin_mut().start_monitoring(exe_path)
+    }
+
+    /// Stop monitoring and terminate the target process.
+    ///
+    /// Stops the ETW session, joins the consumer thread, and terminates
+    /// the target process if still running.
+    pub fn stop_monitoring(&mut self) {
+        self.0.pin_mut().stop_monitoring();
+    }
+
+    // -------------------------------------------------------------------------
+    // Target Process Control
+    // -------------------------------------------------------------------------
+
+    /// Freeze (suspend) the target process.
+    pub fn freeze_target(&mut self) {
+        self.0.pin_mut().freeze_target();
+    }
+
+    /// Unfreeze (resume) the target process.
+    pub fn unfreeze_target(&mut self) {
+        self.0.pin_mut().unfreeze_target();
+    }
+
+    /// Terminate the target process.
+    pub fn kill_target(&mut self) {
+        self.0.pin_mut().kill_target();
+    }
+
+    // -------------------------------------------------------------------------
+    // Target State
+    // -------------------------------------------------------------------------
+
+    /// Get the target process ID.
+    ///
+    /// Returns 0 if not currently monitoring a process.
+    pub fn target_pid(&self) -> u32 {
+        self.0.target_pid()
+    }
+
+    /// Check if the target process is still running.
+    ///
+    /// Returns `true` if currently monitoring and the target is running.
+    pub fn target_running(&self) -> bool {
+        self.0.target_running()
+    }
 }
 
 #[cfg(test)]
@@ -227,5 +303,43 @@ mod tests {
         assert_eq!(Status::Denied.repr, 1);
         assert_eq!(Status::Pending.repr, 2);
         assert_eq!(Status::Error.repr, 3);
+    }
+
+    // -------------------------------------------------------------------------
+    // Monitoring API Presence Tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_start_stop_monitoring_api_exists() {
+        let mut engine = Engine::new(64, 1);
+        // On non-Windows, start_monitoring returns false (no ETW support)
+        // On Windows without a valid exe, it will also return false
+        // This test verifies the API is callable without panicking
+        let _ = engine.start_monitoring("nonexistent.exe");
+        engine.stop_monitoring();
+    }
+
+    #[test]
+    fn test_freeze_unfreeze_api_exists() {
+        let mut engine = Engine::new(64, 1);
+        // These should be no-ops when not monitoring
+        engine.freeze_target();
+        engine.unfreeze_target();
+    }
+
+    #[test]
+    fn test_kill_target_api_exists() {
+        let mut engine = Engine::new(64, 1);
+        // Should be no-op when not monitoring
+        engine.kill_target();
+    }
+
+    #[test]
+    fn test_target_state_api_exists() {
+        let engine = Engine::new(64, 1);
+        // PID should be 0 when not monitoring
+        assert_eq!(engine.target_pid(), 0);
+        // Should not be running when not monitoring
+        assert!(!engine.target_running());
     }
 }
