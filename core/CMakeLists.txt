@@ -7,9 +7,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(exeray_core STATIC
     src/stub.cpp
+    src/engine.cpp
     src/event/string_pool.cpp
     src/event/graph.cpp
     src/etw/session.cpp
+    src/etw/consumer.cpp
     src/etw/parser_process.cpp
     src/etw/parser_file.cpp
     src/etw/parser_registry.cpp
@@ -17,6 +19,7 @@ add_library(exeray_core STATIC
     src/etw/parser_dispatch.cpp
     src/process/controller.cpp
 )
+
 
 target_include_directories(exeray_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
