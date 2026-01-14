@@ -143,6 +143,16 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* string
 /// Detects bypass attempts (empty content) and malware results.
 ParsedEvent parse_amsi_event(const EVENT_RECORD* record, event::StringPool* strings);
 
+/// @brief Parse a Microsoft-Windows-DNS-Client event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with DNS query details.
+///
+/// Handles:
+/// - Event ID 3006: Query Completed → DnsOp::Response
+/// - Event ID 3008: Query Failed → DnsOp::Failure
+/// Detects DGA-like suspicious domains using entropy analysis.
+ParsedEvent parse_dns_event(const EVENT_RECORD* record, event::StringPool* strings);
+
 }  // namespace exeray::etw
 
 #else  // !_WIN32
@@ -204,6 +214,10 @@ inline ParsedEvent parse_powershell_event(const EVENT_RECORD* /*record*/, event:
 }
 
 inline ParsedEvent parse_amsi_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_dns_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 

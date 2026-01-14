@@ -299,6 +299,13 @@ const GUID AMSI = {
     {0xC2, 0x1A, 0x49, 0x42, 0xF0, 0x27, 0x1D, 0x67}
 };
 
+// Microsoft-Windows-DNS-Client
+// {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}
+const GUID DNS_CLIENT = {
+    0x1C95126E, 0x7EEA, 0x49A9,
+    {0xA3, 0xFE, 0xA3, 0x78, 0xB0, 0x3D, 0xDB, 0x4D}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -319,6 +326,7 @@ const GUID KERNEL_THREAD = {0, 0, 0, {0}};
 const GUID KERNEL_MEMORY = {0, 0, 0, {0}};
 const GUID POWERSHELL = {0, 0, 0, {0}};
 const GUID AMSI = {0, 0, 0, {0}};
+const GUID DNS_CLIENT = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

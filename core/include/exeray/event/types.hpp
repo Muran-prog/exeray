@@ -54,6 +54,7 @@ enum class Category : std::uint8_t {
     Memory,       ///< Virtual memory allocation operations
     Script,       ///< PowerShell script execution operations
     Amsi,         ///< AMSI scan operations
+    Dns,          ///< DNS query operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -179,6 +180,17 @@ enum class AmsiOp : std::uint8_t {
     Session   ///< AmsiOpenSession/CloseSession
 };
 
+/**
+ * @brief DNS operation types.
+ *
+ * Tracks DNS queries for C2/DGA domain detection.
+ */
+enum class DnsOp : std::uint8_t {
+    Query,     ///< DNS query initiated
+    Response,  ///< DNS response received
+    Failure    ///< DNS resolution failed
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -211,6 +223,7 @@ static_assert(sizeof(ThreadOp) == 1, "ThreadOp must be 1 byte");
 static_assert(sizeof(MemoryOp) == 1, "MemoryOp must be 1 byte");
 static_assert(sizeof(ScriptOp) == 1, "ScriptOp must be 1 byte");
 static_assert(sizeof(AmsiOp) == 1, "AmsiOp must be 1 byte");
+static_assert(sizeof(DnsOp) == 1, "DnsOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -238,6 +251,8 @@ static_assert(std::is_trivially_copyable_v<ScriptOp>,
               "ScriptOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<AmsiOp>,
               "AmsiOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<DnsOp>,
+              "DnsOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

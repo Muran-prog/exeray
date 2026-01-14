@@ -142,6 +142,11 @@ extern const GUID POWERSHELL;
 /// Traces AMSI scan requests for bypass detection.
 extern const GUID AMSI;
 
+/// Microsoft-Windows-DNS-Client provider
+/// GUID: {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}
+/// Traces DNS query operations for C2/DGA detection.
+extern const GUID DNS_CLIENT;
+
 /// PowerShell keywords for event filtering.
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
@@ -224,6 +229,7 @@ extern const GUID KERNEL_THREAD;
 extern const GUID KERNEL_MEMORY;
 extern const GUID POWERSHELL;
 extern const GUID AMSI;
+extern const GUID DNS_CLIENT;
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;
     constexpr uint64_t PIPELINE = 0x20;

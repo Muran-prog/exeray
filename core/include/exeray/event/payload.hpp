@@ -165,6 +165,21 @@ struct AmsiPayload {
     uint32_t content_size;   ///< Original content size in bytes
 };
 
+/**
+ * @brief Payload for DNS operations.
+ *
+ * Contains DNS query info for C2/DGA domain detection.
+ * Used for Event ID 3006 (Query Completed) and 3008 (Query Failed).
+ */
+struct DnsPayload {
+    StringId domain;        ///< Requested domain name (interned)
+    uint32_t query_type;    ///< A=1, AAAA=28, TXT=16, MX=15, CNAME=5
+    uint32_t result_code;   ///< DNS response code (0=success)
+    uint32_t resolved_ip;   ///< IPv4 address if type A
+    uint8_t is_suspicious;  ///< 1 if DGA-like domain detected
+    uint8_t _pad[3];        ///< Explicit padding for alignment
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -199,6 +214,7 @@ struct EventPayload {
         MemoryPayload memory;       ///< Active when category == Memory
         ScriptPayload script;       ///< Active when category == Script
         AmsiPayload amsi;           ///< Active when category == Amsi
+        DnsPayload dns;             ///< Active when category == Dns
     };
 };
 
@@ -228,6 +244,8 @@ static_assert(sizeof(ScriptPayload) == 16,
               "ScriptPayload must be 16 bytes");
 static_assert(sizeof(AmsiPayload) == 16,
               "AmsiPayload must be 16 bytes");
+static_assert(sizeof(DnsPayload) == 20,
+              "DnsPayload must be 20 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -258,6 +276,8 @@ static_assert(std::is_trivially_copyable_v<ScriptPayload>,
               "ScriptPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<AmsiPayload>,
               "AmsiPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<DnsPayload>,
+              "DnsPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 
