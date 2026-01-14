@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(exeray_core STATIC
     src/stub.cpp
     src/event/string_pool.cpp
+    src/event/graph.cpp
 )
 
 target_include_directories(exeray_core PUBLIC
@@ -50,4 +51,12 @@ if(BUILD_TESTING)
 
     include(GoogleTest)
     gtest_discover_tests(string_pool_test)
+
+    add_executable(graph_test tests/graph_test.cpp)
+    target_link_libraries(graph_test PRIVATE exeray_core GTest::gtest_main)
+    target_compile_options(graph_test PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+    )
+    gtest_discover_tests(graph_test)
 endif()
