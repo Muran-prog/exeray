@@ -180,6 +180,37 @@ struct DnsPayload {
     uint8_t _pad[3];        ///< Explicit padding for alignment
 };
 
+/**
+ * @brief Payload for security auditing events.
+ *
+ * Contains logon/privilege event details for forensics and privilege
+ * escalation detection. Used for Events 4624, 4625, 4688, 4689, 4703.
+ */
+struct SecurityPayload {
+    StringId subject_user;   ///< Account performing the action
+    StringId target_user;    ///< Target account (if different)
+    StringId command_line;   ///< Full command line (Event 4688)
+    uint32_t logon_type;     ///< Logon type (2=Interactive, 3=Network, 10=Remote)
+    uint32_t process_id;     ///< New/target process ID
+    uint8_t is_suspicious;   ///< 1 if suspicious (SeDebugPrivilege, brute force)
+    uint8_t _pad[3];         ///< Explicit padding
+};
+
+/**
+ * @brief Payload for Windows service operations.
+ *
+ * Contains service installation details for persistence detection.
+ * Used for Event 4697 (Service Installation).
+ */
+struct ServicePayload {
+    StringId service_name;   ///< Service display name
+    StringId service_path;   ///< Service executable path
+    uint32_t service_type;   ///< Service type (0x10=Own, 0x20=Share)
+    uint32_t start_type;     ///< Start type (0x2=AUTO, 0x3=DEMAND)
+    uint8_t is_suspicious;   ///< 1 if AUTO_START (persistence)
+    uint8_t _pad[3];         ///< Explicit padding
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -215,6 +246,8 @@ struct EventPayload {
         ScriptPayload script;       ///< Active when category == Script
         AmsiPayload amsi;           ///< Active when category == Amsi
         DnsPayload dns;             ///< Active when category == Dns
+        SecurityPayload security;   ///< Active when category == Security
+        ServicePayload service;     ///< Active when category == Service
     };
 };
 
@@ -246,6 +279,10 @@ static_assert(sizeof(AmsiPayload) == 16,
               "AmsiPayload must be 16 bytes");
 static_assert(sizeof(DnsPayload) == 20,
               "DnsPayload must be 20 bytes");
+static_assert(sizeof(SecurityPayload) == 24,
+              "SecurityPayload must be 24 bytes");
+static_assert(sizeof(ServicePayload) == 20,
+              "ServicePayload must be 20 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -278,6 +315,10 @@ static_assert(std::is_trivially_copyable_v<AmsiPayload>,
               "AmsiPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<DnsPayload>,
               "DnsPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<SecurityPayload>,
+              "SecurityPayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ServicePayload>,
+              "ServicePayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

@@ -22,6 +22,7 @@ add_library(exeray_core STATIC
     src/etw/parser_powershell.cpp
     src/etw/parser_amsi.cpp
     src/etw/parser_dns.cpp
+    src/etw/parser_security.cpp
     src/etw/parser_dispatch.cpp
     src/process/controller.cpp
 )

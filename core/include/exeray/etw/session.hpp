@@ -147,6 +147,11 @@ extern const GUID AMSI;
 /// Traces DNS query operations for C2/DGA detection.
 extern const GUID DNS_CLIENT;
 
+/// Microsoft-Windows-Security-Auditing provider
+/// GUID: {54849625-5478-4994-A5BA-3E3B0328C30D}
+/// Traces security events: logon, privilege changes, service installation.
+extern const GUID SECURITY_AUDITING;
+
 /// PowerShell keywords for event filtering.
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
@@ -230,6 +235,7 @@ extern const GUID KERNEL_MEMORY;
 extern const GUID POWERSHELL;
 extern const GUID AMSI;
 extern const GUID DNS_CLIENT;
+extern const GUID SECURITY_AUDITING;
 namespace powershell_keywords {
     constexpr uint64_t RUNSPACE = 0x10;
     constexpr uint64_t PIPELINE = 0x20;

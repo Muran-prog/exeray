@@ -55,6 +55,8 @@ enum class Category : std::uint8_t {
     Script,       ///< PowerShell script execution operations
     Amsi,         ///< AMSI scan operations
     Dns,          ///< DNS query operations
+    Security,     ///< Security auditing events (logon, privilege changes)
+    Service,      ///< Windows service operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -191,6 +193,32 @@ enum class DnsOp : std::uint8_t {
     Failure    ///< DNS resolution failed
 };
 
+/**
+ * @brief Security auditing operation types.
+ *
+ * Tracks logon attempts, privilege changes, and process creation
+ * for forensics and privilege escalation detection.
+ */
+enum class SecurityOp : std::uint8_t {
+    Logon,            ///< Successful logon (Event 4624)
+    LogonFailed,      ///< Failed logon attempt (Event 4625)
+    PrivilegeAdjust,  ///< Token rights adjusted (Event 4703)
+    ProcessCreate,    ///< New process created (Event 4688)
+    ProcessTerminate  ///< Process terminated (Event 4689)
+};
+
+/**
+ * @brief Windows service operation types.
+ *
+ * Tracks service installation for persistence detection.
+ */
+enum class ServiceOp : std::uint8_t {
+    Install,  ///< Service installed (Event 4697)
+    Start,    ///< Service started
+    Stop,     ///< Service stopped
+    Delete    ///< Service deleted
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -224,6 +252,8 @@ static_assert(sizeof(MemoryOp) == 1, "MemoryOp must be 1 byte");
 static_assert(sizeof(ScriptOp) == 1, "ScriptOp must be 1 byte");
 static_assert(sizeof(AmsiOp) == 1, "AmsiOp must be 1 byte");
 static_assert(sizeof(DnsOp) == 1, "DnsOp must be 1 byte");
+static_assert(sizeof(SecurityOp) == 1, "SecurityOp must be 1 byte");
+static_assert(sizeof(ServiceOp) == 1, "ServiceOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -253,6 +283,10 @@ static_assert(std::is_trivially_copyable_v<AmsiOp>,
               "AmsiOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<DnsOp>,
               "DnsOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<SecurityOp>,
+              "SecurityOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ServiceOp>,
+              "ServiceOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

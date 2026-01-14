@@ -306,6 +306,13 @@ const GUID DNS_CLIENT = {
     {0xA3, 0xFE, 0xA3, 0x78, 0xB0, 0x3D, 0xDB, 0x4D}
 };
 
+// Microsoft-Windows-Security-Auditing
+// {54849625-5478-4994-A5BA-3E3B0328C30D}
+const GUID SECURITY_AUDITING = {
+    0x54849625, 0x5478, 0x4994,
+    {0xA5, 0xBA, 0x3E, 0x3B, 0x03, 0x28, 0xC3, 0x0D}
+};
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -327,6 +334,7 @@ const GUID KERNEL_MEMORY = {0, 0, 0, {0}};
 const GUID POWERSHELL = {0, 0, 0, {0}};
 const GUID AMSI = {0, 0, 0, {0}};
 const GUID DNS_CLIENT = {0, 0, 0, {0}};
+const GUID SECURITY_AUDITING = {0, 0, 0, {0}};
 
 }  // namespace exeray::etw::providers
 

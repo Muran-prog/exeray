@@ -132,6 +132,8 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record, event::StringPool
 /// - KERNEL_MEMORY → parse_memory_event
 /// - POWERSHELL → parse_powershell_event
 /// - AMSI → parse_amsi_event
+/// - DNS_CLIENT → parse_dns_event
+/// - SECURITY_AUDITING → parse_security_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 /// @brief Parse a Microsoft-Antimalware-Scan-Interface event.
@@ -152,6 +154,19 @@ ParsedEvent parse_amsi_event(const EVENT_RECORD* record, event::StringPool* stri
 /// - Event ID 3008: Query Failed → DnsOp::Failure
 /// Detects DGA-like suspicious domains using entropy analysis.
 ParsedEvent parse_dns_event(const EVENT_RECORD* record, event::StringPool* strings);
+
+/// @brief Parse a Microsoft-Windows-Security-Auditing event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with security/service operation details.
+///
+/// Handles:
+/// - Event ID 4624: Logon Success → SecurityOp::Logon
+/// - Event ID 4625: Logon Failed → SecurityOp::LogonFailed (brute force detection)
+/// - Event ID 4688: Process Create → SecurityOp::ProcessCreate (with command line)
+/// - Event ID 4689: Process Terminate → SecurityOp::ProcessTerminate
+/// - Event ID 4697: Service Install → ServiceOp::Install (AUTO_START = suspicious)
+/// - Event ID 4703: Token Rights → SecurityOp::PrivilegeAdjust (SeDebugPrivilege = suspicious)
+ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* strings);
 
 }  // namespace exeray::etw
 
@@ -218,6 +233,10 @@ inline ParsedEvent parse_amsi_event(const EVENT_RECORD* /*record*/, event::Strin
 }
 
 inline ParsedEvent parse_dns_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_security_event(const EVENT_RECORD* /*record*/, event::StringPool* /*strings*/) {
     return ParsedEvent{.valid = false};
 }
 
