@@ -122,6 +122,11 @@ extern const GUID KERNEL_NETWORK;
 /// Traces DLL/EXE image load and unload events.
 extern const GUID KERNEL_IMAGE;
 
+/// Thread events provider (classic NT Kernel Logger)
+/// GUID: {3D6FA8D1-FE05-11D0-9DDA-00C04FD7BA7C}
+/// Traces thread start/end events for remote injection detection.
+extern const GUID KERNEL_THREAD;
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -192,6 +197,7 @@ extern const GUID KERNEL_FILE;
 extern const GUID KERNEL_REGISTRY;
 extern const GUID KERNEL_NETWORK;
 extern const GUID KERNEL_IMAGE;
+extern const GUID KERNEL_THREAD;
 }  // namespace providers
 
 }  // namespace exeray::etw

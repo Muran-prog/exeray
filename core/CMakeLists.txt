@@ -17,6 +17,7 @@ add_library(exeray_core STATIC
     src/etw/parser_registry.cpp
     src/etw/parser_network.cpp
     src/etw/parser_image.cpp
+    src/etw/parser_thread.cpp
     src/etw/parser_dispatch.cpp
     src/process/controller.cpp
 )

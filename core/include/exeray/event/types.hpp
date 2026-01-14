@@ -50,6 +50,7 @@ enum class Category : std::uint8_t {
     Scheduler,    ///< Task scheduler operations
     Input,        ///< Input device hooks and blocks
     Image,        ///< DLL/EXE image load/unload operations
+    Thread,       ///< Thread creation/termination operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -133,6 +134,18 @@ enum class ImageOp : std::uint8_t {
     Unload  ///< Image unloaded from process
 };
 
+/**
+ * @brief Thread operation types.
+ *
+ * Tracks thread creation/termination for remote injection detection.
+ */
+enum class ThreadOp : std::uint8_t {
+    Start,    ///< Thread started
+    End,      ///< Thread terminated
+    DCStart,  ///< Running thread enumeration (session start)
+    DCEnd     ///< Running thread enumeration (session end)
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -160,6 +173,7 @@ static_assert(sizeof(ProcessOp) == 1, "ProcessOp must be 1 byte");
 static_assert(sizeof(SchedulerOp) == 1, "SchedulerOp must be 1 byte");
 static_assert(sizeof(InputOp) == 1, "InputOp must be 1 byte");
 static_assert(sizeof(ImageOp) == 1, "ImageOp must be 1 byte");
+static_assert(sizeof(ThreadOp) == 1, "ThreadOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -179,6 +193,8 @@ static_assert(std::is_trivially_copyable_v<InputOp>,
               "InputOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ImageOp>,
               "ImageOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ThreadOp>,
+              "ThreadOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

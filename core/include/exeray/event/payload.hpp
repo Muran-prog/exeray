@@ -108,6 +108,21 @@ struct ImagePayload {
     uint8_t _pad[3];         ///< Explicit padding for alignment
 };
 
+/**
+ * @brief Payload for thread operations.
+ *
+ * Contains thread ID, process IDs, and start address for injection detection.
+ * Used for detecting remote thread injection (CreateRemoteThread).
+ */
+struct ThreadPayload {
+    uint32_t thread_id;      ///< Thread ID
+    uint32_t process_id;     ///< Target process ID (thread owner)
+    uint64_t start_address;  ///< Thread entry point address
+    uint32_t creator_pid;    ///< Creator process ID (who created the thread)
+    uint8_t is_remote;       ///< 1 if remote thread injection detected
+    uint8_t _pad[3];         ///< Explicit padding for alignment
+};
+
 // ---------------------------------------------------------------------------
 // Tagged Union
 // ---------------------------------------------------------------------------
@@ -138,6 +153,7 @@ struct EventPayload {
         SchedulerPayload scheduler; ///< Active when category == Scheduler
         InputPayload input;         ///< Active when category == Input
         ImagePayload image;         ///< Active when category == Image
+        ThreadPayload thread;       ///< Active when category == Thread
     };
 };
 
@@ -159,6 +175,8 @@ static_assert(sizeof(InputPayload) == 16,
               "InputPayload must be 16 bytes");
 static_assert(sizeof(ImagePayload) == 24,
               "ImagePayload must be 24 bytes");
+static_assert(sizeof(ThreadPayload) == 24,
+              "ThreadPayload must be 24 bytes");
 
 static_assert(sizeof(EventPayload) == 32,
               "EventPayload must be exactly 32 bytes");
@@ -181,6 +199,8 @@ static_assert(std::is_trivially_copyable_v<InputPayload>,
               "InputPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ImagePayload>,
               "ImagePayload must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<ThreadPayload>,
+              "ThreadPayload must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<EventPayload>,
               "EventPayload must be trivially copyable");
 

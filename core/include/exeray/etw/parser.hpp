@@ -82,6 +82,18 @@ ParsedEvent parse_network_event(const EVENT_RECORD* record);
 /// Also detects suspicious DLLs loaded from temp/appdata paths.
 ParsedEvent parse_image_event(const EVENT_RECORD* record);
 
+/// @brief Parse a Thread event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with thread operation details.
+///
+/// Handles:
+/// - Event ID 1: Start → ThreadOp::Start
+/// - Event ID 2: End → ThreadOp::End
+/// - Event ID 3: DCStart → ThreadOp::DCStart
+/// - Event ID 4: DCEnd → ThreadOp::DCEnd
+/// Detects remote thread injection when creator != target process.
+ParsedEvent parse_thread_event(const EVENT_RECORD* record);
+
 /// @brief Dispatch an ETW event to the appropriate parser based on provider.
 /// @param record Pointer to the raw ETW event record.
 /// @return ParsedEvent from the matching parser, or invalid if unrecognized.
@@ -92,6 +104,7 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record);
 /// - KERNEL_REGISTRY → parse_registry_event
 /// - KERNEL_NETWORK → parse_network_event
 /// - KERNEL_IMAGE → parse_image_event
+/// - KERNEL_THREAD → parse_thread_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record);
 
 }  // namespace exeray::etw
@@ -135,6 +148,10 @@ inline ParsedEvent parse_network_event(const EVENT_RECORD* /*record*/) {
 }
 
 inline ParsedEvent parse_image_event(const EVENT_RECORD* /*record*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_thread_event(const EVENT_RECORD* /*record*/) {
     return ParsedEvent{.valid = false};
 }
 
