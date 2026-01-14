@@ -12,10 +12,11 @@
 #include "exeray/etw/session.hpp"
 #include "exeray/event/string_pool.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -134,7 +135,20 @@ bool is_remote_host(std::wstring_view host) {
     return true;
 }
 
-/// @brief Log WMI operation to stderr.
+/// @brief Convert wide string to narrow for logging.
+std::string wstring_to_narrow(std::wstring_view wstr, size_t max_len = 80) {
+    std::string result;
+    result.reserve(std::min(wstr.size(), max_len));
+    for (size_t i = 0; i < wstr.size() && i < max_len; ++i) {
+        result.push_back(static_cast<char>(wstr[i] & 0x7F));
+    }
+    if (wstr.size() > max_len) {
+        result += "...";
+    }
+    return result;
+}
+
+/// @brief Log WMI operation.
 void log_wmi_operation(uint32_t pid, event::WmiOp op,
                        std::wstring_view ns, std::wstring_view query,
                        std::wstring_view host, bool is_suspicious) {
@@ -146,26 +160,27 @@ void log_wmi_operation(uint32_t pid, event::WmiOp op,
         case event::WmiOp::Connect: op_name = "Connect"; break;
     }
 
-    if (is_suspicious) {
-        std::fprintf(stderr, "[ALERT] Suspicious WMI %s: PID=%u, ns=", op_name, pid);
-    } else {
-        std::fprintf(stderr, "[TRACE] WMI %s: PID=%u, ns=", op_name, pid);
-    }
+    std::string ns_str = wstring_to_narrow(ns);
+    std::string query_str = wstring_to_narrow(query);
+    std::string host_str = wstring_to_narrow(host);
 
-    for (wchar_t c : ns) std::fputc(static_cast<char>(c & 0x7F), stderr);
-    std::fprintf(stderr, ", query=");
-    // Truncate long queries for logging
-    size_t max_log = 80;
-    size_t logged = 0;
-    for (wchar_t c : query) {
-        if (logged++ >= max_log) { std::fprintf(stderr, "..."); break; }
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
+    if (is_suspicious) {
+        if (!host.empty()) {
+            EXERAY_WARN("Suspicious WMI {}: pid={}, ns={}, query={}, host={}",
+                        op_name, pid, ns_str, query_str, host_str);
+        } else {
+            EXERAY_WARN("Suspicious WMI {}: pid={}, ns={}, query={}",
+                        op_name, pid, ns_str, query_str);
+        }
+    } else {
+        if (!host.empty()) {
+            EXERAY_TRACE("WMI {}: pid={}, ns={}, query={}, host={}",
+                         op_name, pid, ns_str, query_str, host_str);
+        } else {
+            EXERAY_TRACE("WMI {}: pid={}, ns={}, query={}",
+                         op_name, pid, ns_str, query_str);
+        }
     }
-    if (!host.empty()) {
-        std::fprintf(stderr, ", host=");
-        for (wchar_t c : host) std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-    std::fprintf(stderr, "\n");
 }
 
 /// @brief Parse WMI operation event.

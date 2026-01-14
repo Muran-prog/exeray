@@ -2,8 +2,8 @@
 /// @brief Implementation of Process Controller using Windows APIs.
 
 #include "exeray/process/controller.hpp"
+#include "exeray/logging.hpp"
 
-#include <cstdio>
 #include <string>
 
 #ifdef _WIN32
@@ -21,8 +21,7 @@ namespace {
 /// @brief Log Windows error with function context.
 void log_error(const char* function) {
     DWORD error = GetLastError();
-    std::fprintf(stderr, "[exeray::process] %s failed with error %lu\n",
-                 function, error);
+    EXERAY_ERROR("[exeray::process] {} failed with error {}", function, error);
 }
 #endif
 
@@ -111,7 +110,7 @@ std::unique_ptr<Controller> Controller::launch(
     return controller;
 #else
     // Non-Windows: not supported
-    std::fprintf(stderr, "[exeray::process] Controller::launch() not supported on this platform\n");
+    EXERAY_ERROR("[exeray::process] Controller::launch() not supported on this platform");
     return nullptr;
 #endif
 }

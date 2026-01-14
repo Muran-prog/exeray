@@ -5,6 +5,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# spdlog for structured logging
+include(FetchContent)
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.13.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 add_library(exeray_core STATIC
     src/stub.cpp
     src/engine.cpp
@@ -28,6 +37,7 @@ add_library(exeray_core STATIC
     src/etw/parser_clr.cpp
     src/etw/parser_dispatch.cpp
     src/process/controller.cpp
+    src/logging.cpp
 )
 
 
@@ -40,6 +50,9 @@ target_compile_options(exeray_core PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
     $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-O3>
 )
+
+# Link spdlog for structured logging
+target_link_libraries(exeray_core PUBLIC spdlog::spdlog)
 
 # Windows ETW requires advapi32 and tdh
 if(WIN32)

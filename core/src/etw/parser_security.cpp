@@ -10,7 +10,6 @@
 #include "exeray/etw/session.hpp"
 #include "exeray/event/string_pool.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
@@ -18,6 +17,8 @@
 #include <chrono>
 #include <mutex>
 #include <algorithm>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -146,25 +147,37 @@ const char* logon_type_name(uint32_t type) {
     }
 }
 
-/// @brief Log security event to stderr.
+/// @brief Convert wide string to narrow for logging.
+std::string wstring_to_narrow(std::wstring_view wstr, size_t max_len = 100) {
+    std::string result;
+    result.reserve(std::min(wstr.size(), max_len));
+    for (size_t i = 0; i < wstr.size() && i < max_len; ++i) {
+        result.push_back(static_cast<char>(wstr[i] & 0x7F));
+    }
+    if (wstr.size() > max_len) {
+        result += "...";
+    }
+    return result;
+}
+
+/// @brief Log security event.
 void log_security_event(const char* event_type, uint32_t pid, 
                         std::wstring_view user, bool suspicious,
                         const char* details = nullptr) {
+    std::string user_str = wstring_to_narrow(user);
     if (suspicious) {
-        std::fprintf(stderr, "[ALERT] %s: PID=%u, user=", event_type, pid);
+        if (details) {
+            EXERAY_WARN("{}: pid={}, user={}, {} [SUSPICIOUS]", event_type, pid, user_str, details);
+        } else {
+            EXERAY_WARN("{}: pid={}, user={} [SUSPICIOUS]", event_type, pid, user_str);
+        }
     } else {
-        std::fprintf(stderr, "[TRACE] %s: PID=%u, user=", event_type, pid);
+        if (details) {
+            EXERAY_TRACE("{}: pid={}, user={}, {}", event_type, pid, user_str, details);
+        } else {
+            EXERAY_TRACE("{}: pid={}, user={}", event_type, pid, user_str);
+        }
     }
-    for (wchar_t c : user) {
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-    if (details) {
-        std::fprintf(stderr, ", %s", details);
-    }
-    if (suspicious) {
-        std::fprintf(stderr, " [SUSPICIOUS]");
-    }
-    std::fputc('\n', stderr);
 }
 
 /// @brief Parse Event 4624 - Logon Success.
@@ -350,20 +363,9 @@ ParsedEvent parse_process_create(const EVENT_RECORD* record,
     result.payload.security.is_suspicious = 0;
     std::memset(result.payload.security._pad, 0, sizeof(result.payload.security._pad));
     
-    std::fprintf(stderr, "[TRACE] Process Create: user=");
-    for (wchar_t c : subject_user) {
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-    std::fprintf(stderr, ", cmdline=");
-    // Truncate long command lines for logging
-    size_t log_len = (std::min)(command_line.size(), size_t(100));
-    for (size_t i = 0; i < log_len; ++i) {
-        std::fputc(static_cast<char>(command_line[i] & 0x7F), stderr);
-    }
-    if (command_line.size() > 100) {
-        std::fprintf(stderr, "...");
-    }
-    std::fputc('\n', stderr);
+    std::string user_str = wstring_to_narrow(subject_user);
+    std::string cmdline_str = wstring_to_narrow(command_line);
+    EXERAY_TRACE("Process Create: user={}, cmdline={}", user_str, cmdline_str);
     
     result.valid = true;
     return result;
@@ -406,11 +408,8 @@ ParsedEvent parse_process_terminate(const EVENT_RECORD* record,
     result.payload.security.is_suspicious = 0;
     std::memset(result.payload.security._pad, 0, sizeof(result.payload.security._pad));
     
-    std::fprintf(stderr, "[TRACE] Process Terminate: PID=%u, process=", result.pid);
-    for (wchar_t c : process_name) {
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-    std::fputc('\n', stderr);
+    std::string process_str = wstring_to_narrow(process_name);
+    EXERAY_TRACE("Process Terminate: pid={}, process={}", result.pid, process_str);
     
     result.valid = true;
     return result;
@@ -478,24 +477,14 @@ ParsedEvent parse_service_install(const EVENT_RECORD* record,
     }
     
     // Log
+    std::string name_str = wstring_to_narrow(service_name);
+    std::string path_str = wstring_to_narrow(service_path, 80);
     if (suspicious) {
-        std::fprintf(stderr, "[ALERT] Service Install (AUTO_START - Persistence!): ");
+        EXERAY_WARN("Service Install (AUTO_START - Persistence!): name={}, path={}",
+                    name_str, path_str);
     } else {
-        std::fprintf(stderr, "[TRACE] Service Install: ");
+        EXERAY_TRACE("Service Install: name={}, path={}", name_str, path_str);
     }
-    std::fprintf(stderr, "name=");
-    for (wchar_t c : service_name) {
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-    std::fprintf(stderr, ", path=");
-    size_t log_len = (std::min)(service_path.size(), size_t(80));
-    for (size_t i = 0; i < log_len; ++i) {
-        std::fputc(static_cast<char>(service_path[i] & 0x7F), stderr);
-    }
-    if (service_path.size() > 80) {
-        std::fprintf(stderr, "...");
-    }
-    std::fputc('\n', stderr);
     
     result.valid = true;
     return result;
@@ -556,16 +545,10 @@ ParsedEvent parse_token_rights(const EVENT_RECORD* record,
     
     if (suspicious) {
         result.status = event::Status::Suspicious;
-        std::fprintf(stderr, "[ALERT] Token Rights (DANGEROUS PRIVILEGE!): user=");
-        for (wchar_t c : subject_user) {
-            std::fputc(static_cast<char>(c & 0x7F), stderr);
-        }
-        std::fprintf(stderr, ", privs=");
-        size_t log_len = (std::min)(enabled_privs.size(), size_t(100));
-        for (size_t i = 0; i < log_len; ++i) {
-            std::fputc(static_cast<char>(enabled_privs[i] & 0x7F), stderr);
-        }
-        std::fputc('\n', stderr);
+        std::string user_str = wstring_to_narrow(subject_user);
+        std::string privs_str = wstring_to_narrow(enabled_privs);
+        EXERAY_WARN("Token Rights (DANGEROUS PRIVILEGE!): user={}, privs={}",
+                    user_str, privs_str);
     }
     
     result.valid = true;

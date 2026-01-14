@@ -5,8 +5,8 @@
 
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/logging.hpp"
 
-#include <cstdio>
 #include <cstring>
 
 namespace exeray::etw {
@@ -122,11 +122,8 @@ ParsedEvent parse_virtual_alloc(const EVENT_RECORD* record) {
 
         // Extra warning for large RWX allocations
         if (region_size > LARGE_ALLOC_THRESHOLD) {
-            std::fprintf(stderr,
-                "[ALERT] Large RWX allocation: PID=%u, addr=0x%llx, size=%llu bytes\n",
-                process_id,
-                static_cast<unsigned long long>(base_address),
-                static_cast<unsigned long long>(region_size));
+            EXERAY_WARN("Large RWX allocation: pid={}, addr=0x{:x}, size={} bytes",
+                        process_id, base_address, region_size);
         }
     } else {
         result.payload.memory.is_suspicious = 0;

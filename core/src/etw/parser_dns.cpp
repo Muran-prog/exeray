@@ -11,10 +11,11 @@
 #include "exeray/event/string_pool.hpp"
 
 #include <cmath>
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -176,24 +177,26 @@ bool is_dga_suspicious(std::wstring_view domain) {
     return false;
 }
 
-/// @brief Log DNS query event to stderr.
+/// @brief Convert wide string to narrow for logging.
+std::string wstring_to_narrow(std::wstring_view wstr) {
+    std::string result;
+    result.reserve(wstr.size());
+    for (wchar_t c : wstr) {
+        result.push_back(static_cast<char>(c & 0x7F));
+    }
+    return result;
+}
+
+/// @brief Log DNS query event.
 void log_dns_query(uint32_t pid, std::wstring_view domain, uint32_t query_type,
                    uint32_t result_code, bool is_suspicious) {
+    std::string narrow_domain = wstring_to_narrow(domain);
     if (is_suspicious) {
-        std::fprintf(stderr,
-            "[ALERT] Suspicious DNS query (DGA-like): PID=%u, domain=",
-            pid);
-        for (wchar_t c : domain) {
-            std::fputc(static_cast<char>(c & 0x7F), stderr);
-        }
-        std::fprintf(stderr, ", type=%s\n", query_type_name(query_type));
+        EXERAY_WARN("Suspicious DNS query (DGA-like): pid={}, domain={}, type={}",
+                    pid, narrow_domain, query_type_name(query_type));
     } else {
-        std::fprintf(stderr, "[TRACE] DNS query: PID=%u, domain=", pid);
-        for (wchar_t c : domain) {
-            std::fputc(static_cast<char>(c & 0x7F), stderr);
-        }
-        std::fprintf(stderr, ", type=%s, result=%u\n",
-            query_type_name(query_type), result_code);
+        EXERAY_TRACE("DNS query: pid={}, domain={}, type={}, result={}",
+                     pid, narrow_domain, query_type_name(query_type), result_code);
     }
 }
 
@@ -347,13 +350,14 @@ ParsedEvent parse_query_failed(const EVENT_RECORD* record,
     result.status = suspicious ? event::Status::Suspicious : event::Status::Error;
 
     // Log failed query
-    std::fprintf(stderr, "[WARN] DNS query failed: PID=%u, domain=", result.pid);
-    for (wchar_t c : domain) {
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
+    std::string narrow_domain = wstring_to_narrow(domain);
+    if (suspicious) {
+        EXERAY_WARN("DNS query failed (SUSPICIOUS): pid={}, domain={}, type={}, error={}",
+                    result.pid, narrow_domain, query_type_name(query_type), error_code);
+    } else {
+        EXERAY_WARN("DNS query failed: pid={}, domain={}, type={}, error={}",
+                    result.pid, narrow_domain, query_type_name(query_type), error_code);
     }
-    std::fprintf(stderr, ", type=%s, error=%u%s\n",
-        query_type_name(query_type), error_code,
-        suspicious ? " [SUSPICIOUS]" : "");
 
     result.valid = true;
     return result;

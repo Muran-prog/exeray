@@ -31,6 +31,8 @@ namespace exeray {
 struct EngineConfig {
     std::size_t arena_size;   ///< Size of the memory arena in bytes.
     std::size_t num_threads;  ///< Number of worker threads.
+    int log_level = 2;        ///< Log level: 0=trace, 1=debug, 2=info, 3=warn, 4=error.
+    std::string log_file;     ///< Optional log file path (empty = stderr only).
 };
 
 /// @brief Core engine integrating ETW tracing and process control.

@@ -51,7 +51,7 @@ inline std::wstring utf8_to_wstring(const std::string& s) {
 class Handle {
 public:
     Handle(std::size_t arena_mb, std::size_t threads)
-        : engine_(EngineConfig{arena_mb * 1024 * 1024, threads}) {}
+        : engine_(EngineConfig{arena_mb * 1024 * 1024, threads, 2, {}}) {}
 
     void submit() { engine_.submit(); }
 

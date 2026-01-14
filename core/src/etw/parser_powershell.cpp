@@ -12,10 +12,11 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -99,13 +100,10 @@ bool contains_suspicious_pattern(std::string_view script) {
     return false;
 }
 
-/// @brief Log suspicious script detection to stderr.
+/// @brief Log suspicious script detection.
 void log_suspicious_script(uint32_t pid, std::string_view matched_pattern) {
-    std::fprintf(stderr,
-        "[ALERT] Suspicious PowerShell detected: PID=%u, pattern='%.*s'\n",
-        pid,
-        static_cast<int>(matched_pattern.size()),
-        matched_pattern.data());
+    EXERAY_WARN("Suspicious PowerShell detected: pid={}, pattern='{}'",
+                pid, matched_pattern);
 }
 
 /// @brief Get the first matched suspicious pattern from script.

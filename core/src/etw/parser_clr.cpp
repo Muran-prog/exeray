@@ -12,10 +12,11 @@
 #include "exeray/etw/session.hpp"
 #include "exeray/event/string_pool.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -125,7 +126,20 @@ bool is_obfuscated_name(std::wstring_view name) {
     return (non_alpha * 2 > name.size());
 }
 
-/// @brief Log CLR operation to stderr.
+/// @brief Convert wide string to narrow for logging.
+std::string wstring_to_narrow(std::wstring_view wstr, size_t max_len = 60) {
+    std::string result;
+    result.reserve(std::min(wstr.size(), max_len));
+    for (size_t i = 0; i < wstr.size() && i < max_len; ++i) {
+        result.push_back(static_cast<char>(wstr[i] & 0x7F));
+    }
+    if (wstr.size() > max_len) {
+        result += "...";
+    }
+    return result;
+}
+
+/// @brief Log CLR operation.
 void log_clr_operation(uint32_t pid, event::ClrOp op,
                        std::wstring_view assembly, std::wstring_view method,
                        bool is_dynamic, bool is_suspicious) {
@@ -136,34 +150,26 @@ void log_clr_operation(uint32_t pid, event::ClrOp op,
         case event::ClrOp::MethodJit:      op_name = "MethodJit"; break;
     }
 
+    std::string asm_str = wstring_to_narrow(assembly);
+    std::string method_str = wstring_to_narrow(method);
+
     if (is_suspicious) {
-        std::fprintf(stderr, "[ALERT] Suspicious CLR %s: PID=%u", op_name, pid);
+        if (is_dynamic) {
+            EXERAY_WARN("Suspicious CLR {} [DYNAMIC/IN-MEMORY]: pid={}, asm={}, method={}",
+                        op_name, pid, asm_str, method_str);
+        } else {
+            EXERAY_WARN("Suspicious CLR {}: pid={}, asm={}, method={}",
+                        op_name, pid, asm_str, method_str);
+        }
     } else {
-        std::fprintf(stderr, "[TRACE] CLR %s: PID=%u", op_name, pid);
-    }
-
-    if (is_dynamic) {
-        std::fprintf(stderr, " [DYNAMIC/IN-MEMORY]");
-    }
-
-    std::fprintf(stderr, " asm=");
-    size_t max_log = 60;
-    size_t logged = 0;
-    for (wchar_t c : assembly) {
-        if (logged++ >= max_log) { std::fprintf(stderr, "..."); break; }
-        std::fputc(static_cast<char>(c & 0x7F), stderr);
-    }
-
-    if (!method.empty()) {
-        std::fprintf(stderr, " method=");
-        logged = 0;
-        for (wchar_t c : method) {
-            if (logged++ >= max_log) { std::fprintf(stderr, "..."); break; }
-            std::fputc(static_cast<char>(c & 0x7F), stderr);
+        if (is_dynamic) {
+            EXERAY_TRACE("CLR {} [DYNAMIC/IN-MEMORY]: pid={}, asm={}, method={}",
+                         op_name, pid, asm_str, method_str);
+        } else {
+            EXERAY_TRACE("CLR {}: pid={}, asm={}, method={}",
+                         op_name, pid, asm_str, method_str);
         }
     }
-
-    std::fprintf(stderr, "\n");
 }
 
 /// @brief Parse assembly load/unload event.

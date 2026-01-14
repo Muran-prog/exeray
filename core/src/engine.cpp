@@ -3,9 +3,8 @@
 
 #include "exeray/engine.hpp"
 #include "exeray/etw/session.hpp"
+#include "exeray/logging.hpp"
 #include "exeray/process/controller.hpp"
-
-#include <iostream>
 
 namespace exeray {
 
@@ -36,7 +35,7 @@ Engine::~Engine() {
 bool Engine::start_monitoring(std::wstring_view exe_path) {
     // Don't start if already monitoring
     if (monitoring_.load(std::memory_order_acquire)) {
-        std::cerr << "Engine: Already monitoring a process\n";
+        EXERAY_ERROR("Engine: Already monitoring a process");
         return false;
     }
 
@@ -44,7 +43,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
     // Step 1: Launch target process in suspended mode
     target_ = process::Controller::launch(exe_path);
     if (!target_) {
-        std::cerr << "Engine: Failed to launch target process\n";
+        EXERAY_ERROR("Engine: Failed to launch target process");
         return false;
     }
 
@@ -58,7 +57,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
         &consumer_ctx_
     );
     if (!etw_session_) {
-        std::cerr << "Engine: Failed to create ETW session\n";
+        EXERAY_ERROR("Engine: Failed to create ETW session");
         target_.reset();
         target_pid_.store(0, std::memory_order_release);
         return false;
@@ -101,7 +100,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
 #else
     // ETW not available on non-Windows platforms
     (void)exe_path;
-    std::cerr << "Engine: ETW monitoring not available on this platform\n";
+    EXERAY_ERROR("Engine: ETW monitoring not available on this platform");
     return false;
 #endif
 }

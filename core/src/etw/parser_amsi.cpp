@@ -10,10 +10,11 @@
 #include "exeray/etw/session.hpp"
 #include "exeray/event/string_pool.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+
+#include "exeray/logging.hpp"
 
 namespace exeray::etw {
 
@@ -120,27 +121,20 @@ bool is_bypass_attempt(uint32_t content_size, std::wstring_view app_name) {
     return false;
 }
 
-/// @brief Log AMSI scan event to stderr.
+/// @brief Log AMSI scan event.
 void log_amsi_scan(uint32_t pid, uint32_t result, uint32_t content_size,
                    bool is_bypass) {
     const char* result_name = amsi_result_name(result);
     if (is_bypass) {
-        std::fprintf(stderr,
-            "[ALERT] AMSI bypass attempt: PID=%u, empty content from PowerShell\n",
-            pid);
+        EXERAY_WARN("AMSI bypass attempt: pid={}, empty content from PowerShell", pid);
     } else if (is_malware(result)) {
-        std::fprintf(stderr,
-            "[ALERT] AMSI malware detected: PID=%u, result=%s (0x%X), size=%u\n",
-            pid, result_name, result, content_size);
+        EXERAY_WARN("AMSI malware detected: pid={}, result={} (0x{:X}), size={}",
+                    pid, result_name, result, content_size);
     } else if (is_blocked_by_admin(result)) {
-        std::fprintf(stderr,
-            "[INFO] AMSI blocked by admin: PID=%u, size=%u\n",
-            pid, content_size);
+        EXERAY_INFO("AMSI blocked by admin: pid={}, size={}", pid, content_size);
     } else {
-        // Log all scans for visibility (as required)
-        std::fprintf(stderr,
-            "[TRACE] AMSI scan: PID=%u, result=%s, size=%u\n",
-            pid, result_name, content_size);
+        EXERAY_TRACE("AMSI scan: pid={}, result={}, size={}",
+                     pid, result_name, content_size);
     }
 }
 
