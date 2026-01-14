@@ -1,6 +1,8 @@
 #pragma once
 
 #include "exeray/arena.hpp"
+#include "exeray/event/graph.hpp"
+#include "exeray/event/string_pool.hpp"
 #include "exeray/thread_pool.hpp"
 #include "exeray/types.hpp"
 #include <atomic>
@@ -18,6 +20,8 @@ class Engine {
 public:
     explicit Engine(EngineConfig config)
         : arena_(config.arena_size),
+          strings_(arena_),
+          graph_(arena_, strings_),
           pool_(config.num_threads) {}
 
     void submit() {
@@ -50,6 +54,10 @@ public:
         return pool_.size();
     }
 
+    // Event graph access
+    event::EventGraph& graph() { return graph_; }
+    const event::EventGraph& graph() const { return graph_; }
+
 private:
     void process() {
         for (int i = 0; i <= 100; ++i) {
@@ -61,6 +69,8 @@ private:
     }
 
     Arena arena_;
+    event::StringPool strings_;
+    event::EventGraph graph_;
     ThreadPool pool_;
     std::atomic<std::uint64_t> generation_{0};
     std::atomic<std::uint64_t> flags_{StatusFlags::IDLE};
@@ -68,3 +78,4 @@ private:
 };
 
 }
+
