@@ -51,6 +51,7 @@ enum class Category : std::uint8_t {
     Input,        ///< Input device hooks and blocks
     Image,        ///< DLL/EXE image load/unload operations
     Thread,       ///< Thread creation/termination operations
+    Memory,       ///< Virtual memory allocation operations
 
     Count         ///< Sentinel for iteration (not a valid category)
 };
@@ -146,6 +147,16 @@ enum class ThreadOp : std::uint8_t {
     DCEnd     ///< Running thread enumeration (session end)
 };
 
+/**
+ * @brief Virtual memory operation types.
+ *
+ * Tracks VirtualAlloc/VirtualProtect for RWX shellcode detection.
+ */
+enum class MemoryOp : std::uint8_t {
+    Alloc,    ///< VirtualAlloc
+    Free      ///< VirtualFree
+};
+
 // ---------------------------------------------------------------------------
 // Status Enum
 // ---------------------------------------------------------------------------
@@ -154,10 +165,11 @@ enum class ThreadOp : std::uint8_t {
  * @brief Operation result status.
  */
 enum class Status : std::uint8_t {
-    Success, ///< Operation completed successfully
-    Denied,  ///< Operation was denied (access/permission)
-    Pending, ///< Operation is in progress
-    Error    ///< Operation failed with error
+    Success,    ///< Operation completed successfully
+    Denied,     ///< Operation was denied (access/permission)
+    Pending,    ///< Operation is in progress
+    Error,      ///< Operation failed with error
+    Suspicious  ///< Operation flagged as potentially malicious
 };
 
 // ---------------------------------------------------------------------------
@@ -174,6 +186,7 @@ static_assert(sizeof(SchedulerOp) == 1, "SchedulerOp must be 1 byte");
 static_assert(sizeof(InputOp) == 1, "InputOp must be 1 byte");
 static_assert(sizeof(ImageOp) == 1, "ImageOp must be 1 byte");
 static_assert(sizeof(ThreadOp) == 1, "ThreadOp must be 1 byte");
+static_assert(sizeof(MemoryOp) == 1, "MemoryOp must be 1 byte");
 static_assert(sizeof(Status) == 1, "Status must be 1 byte");
 
 // Verify enums are trivially copyable for zero-copy semantics
@@ -195,6 +208,8 @@ static_assert(std::is_trivially_copyable_v<ImageOp>,
               "ImageOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<ThreadOp>,
               "ThreadOp must be trivially copyable");
+static_assert(std::is_trivially_copyable_v<MemoryOp>,
+              "MemoryOp must be trivially copyable");
 static_assert(std::is_trivially_copyable_v<Status>,
               "Status must be trivially copyable");
 

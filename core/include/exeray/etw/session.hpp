@@ -127,6 +127,11 @@ extern const GUID KERNEL_IMAGE;
 /// Traces thread start/end events for remote injection detection.
 extern const GUID KERNEL_THREAD;
 
+/// Virtual memory events provider (PageFault)
+/// GUID: {3D6FA8D3-FE05-11D0-9DDA-00C04FD7BA7C}
+/// Traces VirtualAlloc/VirtualFree for RWX shellcode detection.
+extern const GUID KERNEL_MEMORY;
+
 }  // namespace providers
 
 }  // namespace exeray::etw
@@ -198,6 +203,7 @@ extern const GUID KERNEL_REGISTRY;
 extern const GUID KERNEL_NETWORK;
 extern const GUID KERNEL_IMAGE;
 extern const GUID KERNEL_THREAD;
+extern const GUID KERNEL_MEMORY;
 }  // namespace providers
 
 }  // namespace exeray::etw

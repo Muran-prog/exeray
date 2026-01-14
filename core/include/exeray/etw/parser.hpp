@@ -94,6 +94,16 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record);
 /// Detects remote thread injection when creator != target process.
 ParsedEvent parse_thread_event(const EVENT_RECORD* record);
 
+/// @brief Parse a Virtual Memory event.
+/// @param record Pointer to the raw ETW event record.
+/// @return ParsedEvent with memory operation details.
+///
+/// Handles:
+/// - Event ID 98: VirtualAlloc → MemoryOp::Alloc
+/// - Event ID 99: VirtualFree → MemoryOp::Free
+/// Detects RWX allocations (PAGE_EXECUTE_READWRITE/WRITECOPY).
+ParsedEvent parse_memory_event(const EVENT_RECORD* record);
+
 /// @brief Dispatch an ETW event to the appropriate parser based on provider.
 /// @param record Pointer to the raw ETW event record.
 /// @return ParsedEvent from the matching parser, or invalid if unrecognized.
@@ -105,6 +115,7 @@ ParsedEvent parse_thread_event(const EVENT_RECORD* record);
 /// - KERNEL_NETWORK → parse_network_event
 /// - KERNEL_IMAGE → parse_image_event
 /// - KERNEL_THREAD → parse_thread_event
+/// - KERNEL_MEMORY → parse_memory_event
 ParsedEvent dispatch_event(const EVENT_RECORD* record);
 
 }  // namespace exeray::etw
@@ -152,6 +163,10 @@ inline ParsedEvent parse_image_event(const EVENT_RECORD* /*record*/) {
 }
 
 inline ParsedEvent parse_thread_event(const EVENT_RECORD* /*record*/) {
+    return ParsedEvent{.valid = false};
+}
+
+inline ParsedEvent parse_memory_event(const EVENT_RECORD* /*record*/) {
     return ParsedEvent{.valid = false};
 }
 

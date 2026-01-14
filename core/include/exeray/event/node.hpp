@@ -162,6 +162,18 @@ public:
         return static_cast<ImageOp>(node_->operation);
     }
 
+    /// Get operation as ThreadOp (asserts correct category).
+    [[nodiscard]] ThreadOp thread_op() const noexcept {
+        assert(category() == Category::Thread && "Invalid category for thread_op");
+        return static_cast<ThreadOp>(node_->operation);
+    }
+
+    /// Get operation as MemoryOp (asserts correct category).
+    [[nodiscard]] MemoryOp memory_op() const noexcept {
+        assert(category() == Category::Memory && "Invalid category for memory_op");
+        return static_cast<MemoryOp>(node_->operation);
+    }
+
     /// @}
 
     /// @name Typed Payload Accessors
@@ -207,6 +219,18 @@ public:
     [[nodiscard]] const ImagePayload& as_image() const {
         assert(category() == Category::Image && "Invalid category for as_image");
         return node_->payload.image;
+    }
+
+    /// Get thread payload reference (asserts correct category).
+    [[nodiscard]] const ThreadPayload& as_thread() const {
+        assert(category() == Category::Thread && "Invalid category for as_thread");
+        return node_->payload.thread;
+    }
+
+    /// Get memory payload reference (asserts correct category).
+    [[nodiscard]] const MemoryPayload& as_memory() const {
+        assert(category() == Category::Memory && "Invalid category for as_memory");
+        return node_->payload.memory;
     }
 
     /// @}

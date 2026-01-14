@@ -45,6 +45,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record) {
     if (guid_equal(provider, providers::KERNEL_THREAD)) {
         return parse_thread_event(record);
     }
+    if (guid_equal(provider, providers::KERNEL_MEMORY)) {
+        return parse_memory_event(record);
+    }
 
     // Unknown provider - return invalid
     return ParsedEvent{.valid = false};
