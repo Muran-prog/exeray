@@ -185,7 +185,13 @@ if(BUILD_TESTING)
     )
     gtest_discover_tests(event_graph_test)
 
-    add_executable(correlator_test tests/unit/correlator_test.cpp)
+    add_executable(correlator_test
+        tests/unit/correlator/correlator_parent_lookup_test.cpp
+        tests/unit/correlator/correlator_correlation_id_test.cpp
+        tests/unit/correlator/correlator_registration_test.cpp
+        tests/unit/correlator/correlator_concurrent_test.cpp
+        tests/unit/correlator/correlator_edge_cases_test.cpp
+    )
     target_link_libraries(correlator_test PRIVATE exeray_core GTest::gtest_main)
     target_compile_options(correlator_test PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
