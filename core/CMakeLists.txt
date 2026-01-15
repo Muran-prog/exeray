@@ -134,6 +134,7 @@ if(BUILD_TESTING)
 
     enable_testing()
 
+    # Legacy tests (not in unit/ subdirectory)
     add_executable(string_pool_test tests/string_pool_test.cpp)
     target_link_libraries(string_pool_test PRIVATE exeray_core GTest::gtest_main)
     target_compile_options(string_pool_test PRIVATE
@@ -152,72 +153,7 @@ if(BUILD_TESTING)
     )
     gtest_discover_tests(graph_test)
 
-    add_executable(arena_test
-        tests/unit/arena/arena_basic_test.cpp
-        tests/unit/arena/arena_alignment_test.cpp
-        tests/unit/arena/arena_capacity_test.cpp
-        tests/unit/arena/arena_overflow_test.cpp
-        tests/unit/arena/arena_concurrent_test.cpp
-        tests/unit/arena/arena_reset_test.cpp
-        tests/unit/arena/arena_edge_cases_test.cpp
-        tests/unit/arena/arena_memory_test.cpp
-    )
-    target_link_libraries(arena_test PRIVATE exeray_core GTest::gtest_main)
-    target_compile_options(arena_test PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    )
-    gtest_discover_tests(arena_test)
-
-    add_executable(string_pool_unit_test
-        tests/unit/string_pool/string_pool_basic_test.cpp
-        tests/unit/string_pool/string_pool_special_strings_test.cpp
-        tests/unit/string_pool/string_pool_unicode_test.cpp
-        tests/unit/string_pool/string_pool_wide_test.cpp
-        tests/unit/string_pool/string_pool_get_test.cpp
-        tests/unit/string_pool/string_pool_dedup_test.cpp
-        tests/unit/string_pool/string_pool_concurrent_test.cpp
-        tests/unit/string_pool/string_pool_metrics_test.cpp
-        tests/unit/string_pool/string_pool_exhaustion_test.cpp
-    )
-    target_link_libraries(string_pool_unit_test PRIVATE exeray_core GTest::gtest_main)
-    target_compile_options(string_pool_unit_test PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    )
-    gtest_discover_tests(string_pool_unit_test)
-
-    add_executable(event_graph_test
-        tests/unit/event_graph/event_graph_basic_test.cpp
-        tests/unit/event_graph/event_graph_capacity_test.cpp
-        tests/unit/event_graph/event_graph_parent_child_test.cpp
-        tests/unit/event_graph/event_graph_correlation_test.cpp
-        tests/unit/event_graph/event_graph_category_test.cpp
-        tests/unit/event_graph/event_graph_iteration_test.cpp
-        tests/unit/event_graph/event_graph_concurrent_test.cpp
-        tests/unit/event_graph/event_graph_index_test.cpp
-        tests/unit/event_graph/event_graph_string_test.cpp
-        tests/unit/event_graph/event_graph_edge_cases_test.cpp
-    )
-    target_link_libraries(event_graph_test PRIVATE exeray_core GTest::gtest_main)
-    target_compile_options(event_graph_test PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    )
-    gtest_discover_tests(event_graph_test)
-
-    add_executable(correlator_test
-        tests/unit/correlator/correlator_parent_lookup_test.cpp
-        tests/unit/correlator/correlator_correlation_id_test.cpp
-        tests/unit/correlator/correlator_registration_test.cpp
-        tests/unit/correlator/correlator_concurrent_test.cpp
-        tests/unit/correlator/correlator_edge_cases_test.cpp
-    )
-    target_link_libraries(correlator_test PRIVATE exeray_core GTest::gtest_main)
-    target_compile_options(correlator_test PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    )
-    gtest_discover_tests(correlator_test)
+    # Unit tests from subdirectories (auto-collected)
+    add_subdirectory(tests)
 endif()
 
