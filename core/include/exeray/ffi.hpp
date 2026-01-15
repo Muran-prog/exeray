@@ -49,10 +49,13 @@ inline std::wstring utf8_to_wstring(const std::string& s) {
     return utf8_to_wstring(s.data(), s.size());
 }
 
+// Log levels: 0=trace, 1=debug, 2=info, 3=warn, 4=error
+constexpr int kDefaultLogLevel = 2;  // info level
+
 class Handle {
 public:
     Handle(std::size_t arena_mb, std::size_t threads)
-        : engine_(EngineConfig{arena_mb * 1024 * 1024, threads, 2, {}, {}}) {}
+        : engine_(EngineConfig{arena_mb * 1024 * 1024, threads, kDefaultLogLevel, {}, {}}) {}
 
     void submit() { engine_.submit(); }
 

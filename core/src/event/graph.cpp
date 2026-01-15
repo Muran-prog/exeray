@@ -1,5 +1,6 @@
 #include "exeray/event/graph.hpp"
 
+#include <cassert>
 #include <chrono>
 #include <cstring>
 
@@ -49,9 +50,9 @@ EventId EventGraph::push(Category cat, std::uint8_t op, Status status,
     node.correlation_id = correlation_id;
     std::memset(node._pad, 0, sizeof(node._pad));
 
-    // Copy payload, ensuring category is set correctly
+    // Copy payload - category must already match the expected category
+    assert(payload.category == cat && "payload.category must match cat parameter");
     node.payload = payload;
-    node.payload.category = cat;
 
     // Update indexes under lock
     {

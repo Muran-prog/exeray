@@ -276,6 +276,62 @@ public:
         return node_->payload.memory;
     }
 
+    /// Get script payload reference (throws on invalid category).
+    [[nodiscard]] const ScriptPayload& as_script() const {
+        if (category() != Category::Script) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_script");
+        }
+        return node_->payload.script;
+    }
+
+    /// Get AMSI payload reference (throws on invalid category).
+    [[nodiscard]] const AmsiPayload& as_amsi() const {
+        if (category() != Category::Amsi) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_amsi");
+        }
+        return node_->payload.amsi;
+    }
+
+    /// Get DNS payload reference (throws on invalid category).
+    [[nodiscard]] const DnsPayload& as_dns() const {
+        if (category() != Category::Dns) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_dns");
+        }
+        return node_->payload.dns;
+    }
+
+    /// Get security payload reference (throws on invalid category).
+    [[nodiscard]] const SecurityPayload& as_security() const {
+        if (category() != Category::Security) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_security");
+        }
+        return node_->payload.security;
+    }
+
+    /// Get service payload reference (throws on invalid category).
+    [[nodiscard]] const ServicePayload& as_service() const {
+        if (category() != Category::Service) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_service");
+        }
+        return node_->payload.service;
+    }
+
+    /// Get WMI payload reference (throws on invalid category).
+    [[nodiscard]] const WmiPayload& as_wmi() const {
+        if (category() != Category::Wmi) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_wmi");
+        }
+        return node_->payload.wmi;
+    }
+
+    /// Get CLR payload reference (throws on invalid category).
+    [[nodiscard]] const ClrPayload& as_clr() const {
+        if (category() != Category::Clr) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_clr");
+        }
+        return node_->payload.clr;
+    }
+
     /// @}
 
     /// @name Utility

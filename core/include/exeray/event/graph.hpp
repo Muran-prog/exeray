@@ -203,7 +203,7 @@ void EventGraph::for_each_category(Category cat, F&& fn) const {
 
 template <typename F>
 void EventGraph::for_each_child(EventId parent, F&& fn) const {
-    std::unique_lock lock(mutex_);
+    std::shared_lock lock(mutex_);
     auto [first, last] = parent_index_.equal_range(parent);
     for (auto it = first; it != last; ++it) {
         fn(EventView(&nodes_[it->second]));
@@ -212,7 +212,7 @@ void EventGraph::for_each_child(EventId parent, F&& fn) const {
 
 template <typename F>
 void EventGraph::for_each_correlation(uint32_t correlation_id, F&& fn) const {
-    std::unique_lock lock(mutex_);
+    std::shared_lock lock(mutex_);
     auto [first, last] = correlation_index_.equal_range(correlation_id);
     for (auto it = first; it != last; ++it) {
         fn(EventView(&nodes_[it->second]));

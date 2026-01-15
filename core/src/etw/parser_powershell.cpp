@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -78,12 +79,12 @@ std::string to_lower(std::string_view input) {
     return result;
 }
 
-/// @brief Check if script contains suspicious patterns.
+/// @brief Find the first suspicious pattern in script.
 /// @param script The script content to analyze.
-/// @return true if any suspicious pattern is found.
-bool contains_suspicious_pattern(std::string_view script) {
+/// @return The matched pattern or std::nullopt if none found.
+std::optional<std::string_view> find_suspicious_pattern(std::string_view script) {
     if (script.empty()) {
-        return false;
+        return std::nullopt;
     }
 
     // Convert to lowercase for case-insensitive matching
@@ -91,32 +92,23 @@ bool contains_suspicious_pattern(std::string_view script) {
 
     for (size_t i = 0; i < PATTERN_COUNT; ++i) {
         if (lower_script.find(SUSPICIOUS_PATTERNS[i].pattern) != std::string::npos) {
-            return true;
+            return SUSPICIOUS_PATTERNS[i].pattern;
         }
     }
-    return false;
+    return std::nullopt;
+}
+
+/// @brief Check if script contains suspicious patterns.
+/// @param script The script content to analyze.
+/// @return true if any suspicious pattern is found.
+bool contains_suspicious_pattern(std::string_view script) {
+    return find_suspicious_pattern(script).has_value();
 }
 
 /// @brief Log suspicious script detection.
 void log_suspicious_script(uint32_t pid, std::string_view matched_pattern) {
     EXERAY_WARN("Suspicious PowerShell detected: pid={}, pattern='{}'",
                 pid, matched_pattern);
-}
-
-/// @brief Get the first matched suspicious pattern from script.
-std::string_view get_matched_pattern(std::string_view script) {
-    if (script.empty()) {
-        return {};
-    }
-
-    std::string lower_script = to_lower(script);
-
-    for (size_t i = 0; i < PATTERN_COUNT; ++i) {
-        if (lower_script.find(SUSPICIOUS_PATTERNS[i].pattern) != std::string::npos) {
-            return SUSPICIOUS_PATTERNS[i].pattern;
-        }
-    }
-    return {};
 }
 
 /// @brief Extract wide string from event data.
@@ -194,13 +186,12 @@ ParsedEvent parse_script_block_event(const EVENT_RECORD* record, event::StringPo
     std::string script = wstring_to_string(wscript);
 
     // Check for suspicious patterns
-    if (contains_suspicious_pattern(script)) {
+    if (auto pattern = find_suspicious_pattern(script)) {
         result.payload.script.is_suspicious = 1;
         result.status = event::Status::Suspicious;
 
         // Log alert with matched pattern
-        std::string_view pattern = get_matched_pattern(script);
-        log_suspicious_script(result.pid, pattern);
+        log_suspicious_script(result.pid, *pattern);
     } else {
         result.payload.script.is_suspicious = 0;
     }
