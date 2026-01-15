@@ -10,7 +10,9 @@
 
 #include <atomic>
 #include <cstddef>
+#include <mutex>
 #include <shared_mutex>
+#include <unordered_map>
 #include <string_view>
 
 #include "../arena.hpp"
@@ -169,6 +171,10 @@ private:
     std::atomic<std::size_t> count_{0};
     std::atomic<EventId> next_id_{1};
     mutable std::shared_mutex mutex_;
+
+    // Indexes for O(1) lookup
+    std::unordered_multimap<EventId, std::size_t> parent_index_;
+    std::unordered_multimap<uint32_t, std::size_t> correlation_index_;
 };
 
 // =============================================================================
@@ -197,23 +203,19 @@ void EventGraph::for_each_category(Category cat, F&& fn) const {
 
 template <typename F>
 void EventGraph::for_each_child(EventId parent, F&& fn) const {
-    std::shared_lock lock(mutex_);
-    const auto current_count = count_.load(std::memory_order_acquire);
-    for (std::size_t i = 0; i < current_count; ++i) {
-        if (nodes_[i].parent_id == parent) {
-            fn(EventView(&nodes_[i]));
-        }
+    std::unique_lock lock(mutex_);
+    auto [first, last] = parent_index_.equal_range(parent);
+    for (auto it = first; it != last; ++it) {
+        fn(EventView(&nodes_[it->second]));
     }
 }
 
 template <typename F>
 void EventGraph::for_each_correlation(uint32_t correlation_id, F&& fn) const {
-    std::shared_lock lock(mutex_);
-    const auto current_count = count_.load(std::memory_order_acquire);
-    for (std::size_t i = 0; i < current_count; ++i) {
-        if (nodes_[i].correlation_id == correlation_id) {
-            fn(EventView(&nodes_[i]));
-        }
+    std::unique_lock lock(mutex_);
+    auto [first, last] = correlation_index_.equal_range(correlation_id);
+    for (auto it = first; it != last; ++it) {
+        fn(EventView(&nodes_[it->second]));
     }
 }
 

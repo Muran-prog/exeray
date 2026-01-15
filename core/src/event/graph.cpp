@@ -53,6 +53,17 @@ EventId EventGraph::push(Category cat, std::uint8_t op, Status status,
     node.payload = payload;
     node.payload.category = cat;
 
+    // Update indexes under lock
+    {
+        std::unique_lock lock(mutex_);
+        if (parent != INVALID_EVENT) {
+            parent_index_.emplace(parent, index);
+        }
+        if (correlation_id != 0) {
+            correlation_index_.emplace(correlation_id, index);
+        }
+    }
+
     return id;
 }
 
