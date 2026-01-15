@@ -7,15 +7,52 @@
 #include "exeray/etw/session.hpp"
 
 #include <cstring>
+#include <unordered_map>
 
 namespace exeray::etw {
 
 namespace {
 
-/// @brief Compare two GUIDs for equality.
-bool guid_equal(const GUID& a, const GUID& b) {
-    return std::memcmp(&a, &b, sizeof(GUID)) == 0;
-}
+/// @brief Hash functor for GUID keys in unordered_map.
+struct GuidHash {
+    std::size_t operator()(const GUID& g) const noexcept {
+        // Combine Data1, Data2, Data3, and Data4 into a single hash
+        std::size_t h = std::hash<uint32_t>{}(g.Data1);
+        h ^= std::hash<uint16_t>{}(g.Data2) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<uint16_t>{}(g.Data3) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        for (int i = 0; i < 8; ++i) {
+            h ^= std::hash<uint8_t>{}(g.Data4[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
+    }
+};
+
+/// @brief Equality functor for GUID keys in unordered_map.
+struct GuidEqual {
+    bool operator()(const GUID& a, const GUID& b) const noexcept {
+        return std::memcmp(&a, &b, sizeof(GUID)) == 0;
+    }
+};
+
+/// @brief Function pointer type for parser functions.
+using ParseFunc = ParsedEvent(*)(const EVENT_RECORD*, event::StringPool*);
+
+/// @brief Static dispatch table mapping provider GUIDs to parser functions.
+static const std::unordered_map<GUID, ParseFunc, GuidHash, GuidEqual> dispatch_table = {
+    {providers::KERNEL_PROCESS,    parse_process_event},
+    {providers::KERNEL_FILE,       parse_file_event},
+    {providers::KERNEL_REGISTRY,   parse_registry_event},
+    {providers::KERNEL_NETWORK,    parse_network_event},
+    {providers::KERNEL_IMAGE,      parse_image_event},
+    {providers::KERNEL_THREAD,     parse_thread_event},
+    {providers::KERNEL_MEMORY,     parse_memory_event},
+    {providers::POWERSHELL,        parse_powershell_event},
+    {providers::AMSI,              parse_amsi_event},
+    {providers::DNS_CLIENT,        parse_dns_event},
+    {providers::SECURITY_AUDITING, parse_security_event},
+    {providers::WMI_ACTIVITY,      parse_wmi_event},
+    {providers::CLR_RUNTIME,       parse_clr_event},
+};
 
 }  // namespace
 
@@ -26,49 +63,9 @@ ParsedEvent dispatch_event(const EVENT_RECORD* record, event::StringPool* string
 
     const GUID& provider = record->EventHeader.ProviderId;
 
-    // Route to appropriate parser based on provider GUID
-    if (guid_equal(provider, providers::KERNEL_PROCESS)) {
-        return parse_process_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_FILE)) {
-        return parse_file_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_REGISTRY)) {
-        return parse_registry_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_NETWORK)) {
-        return parse_network_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_IMAGE)) {
-        return parse_image_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_THREAD)) {
-        return parse_thread_event(record, strings);
-    }
-    if (guid_equal(provider, providers::KERNEL_MEMORY)) {
-        return parse_memory_event(record, strings);
-    }
-    if (guid_equal(provider, providers::POWERSHELL)) {
-        return parse_powershell_event(record, strings);
-    }
-    if (guid_equal(provider, providers::AMSI)) {
-        return parse_amsi_event(record, strings);
-    }
-    if (guid_equal(provider, providers::DNS_CLIENT)) {
-        return parse_dns_event(record, strings);
-    }
-    if (guid_equal(provider, providers::SECURITY_AUDITING)) {
-        return parse_security_event(record, strings);
-    }
-    if (guid_equal(provider, providers::WMI_ACTIVITY)) {
-        return parse_wmi_event(record, strings);
-    }
-    if (guid_equal(provider, providers::CLR_RUNTIME)) {
-        return parse_clr_event(record, strings);
-    }
-
-    // Unknown provider - return invalid
-    return ParsedEvent{.valid = false};
+    auto it = dispatch_table.find(provider);
+    return (it != dispatch_table.end()) ? it->second(record, strings)
+                                        : ParsedEvent{.valid = false};
 }
 
 }  // namespace exeray::etw
