@@ -18,10 +18,10 @@ void log_error(const wchar_t* context, ULONG error_code) {
         reinterpret_cast<LPWSTR>(&message), 0, nullptr);
 
     if (message) {
-        std::fwprintf(stderr, L"[ETW] %ls: error %lu - %ls", context, error_code, message);
+        ::fwprintf(stderr, L"[ETW] %ls: error %lu - %ls", context, error_code, message);
         LocalFree(message);
     } else {
-        std::fwprintf(stderr, L"[ETW] %ls: error %lu\n", context, error_code);
+        ::fwprintf(stderr, L"[ETW] %ls: error %lu\n", context, error_code);
     }
 }
 
