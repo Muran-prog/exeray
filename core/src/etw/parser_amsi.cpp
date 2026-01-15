@@ -13,7 +13,9 @@
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
 
+#include <algorithm>
 #include <cstring>
+#include <cwctype>
 #include <string>
 #include <string_view>
 
@@ -22,6 +24,22 @@
 namespace exeray::etw {
 
 namespace {
+
+/// @brief Case-insensitive substring search for wide strings.
+/// @param haystack The string to search in.
+/// @param needle The substring to search for.
+/// @return true if needle is found in haystack (case-insensitive).
+bool contains_case_insensitive(std::wstring_view haystack, std::wstring_view needle) {
+    if (needle.empty()) return true;
+    if (haystack.size() < needle.size()) return false;
+
+    auto it = std::ranges::search(haystack, needle,
+        [](wchar_t a, wchar_t b) {
+            return std::towlower(a) == std::towlower(b);
+        });
+
+    return !it.empty();
+}
 
 /// @brief AMSI scan result values.
 ///
@@ -65,25 +83,6 @@ const char* amsi_result_name(uint32_t result) {
     }
 }
 
-/// @brief Extract wide string from event data.
-/// @param data Pointer to start of string.
-/// @param max_len Maximum bytes to read.
-/// @return String view (empty if null or invalid).
-std::wstring_view extract_wstring(const uint8_t* data, size_t max_len) {
-    if (data == nullptr || max_len < 2) {
-        return {};
-    }
-
-    // Find null terminator
-    const auto* wdata = reinterpret_cast<const wchar_t*>(data);
-    size_t max_chars = max_len / sizeof(wchar_t);
-    size_t len = 0;
-    while (len < max_chars && wdata[len] != L'\0') {
-        ++len;
-    }
-    return {wdata, len};
-}
-
 /// @brief Check if scan appears to be an AMSI bypass attempt.
 ///
 /// AMSI bypass is detected when:
@@ -92,21 +91,7 @@ std::wstring_view extract_wstring(const uint8_t* data, size_t max_len) {
 bool is_bypass_attempt(uint32_t content_size, std::wstring_view app_name) {
     // Empty content after PowerShell is suspicious
     if (content_size == 0) {
-        // Check if app name contains PowerShell
-        for (size_t i = 0; i + 9 < app_name.size(); ++i) {
-            if ((app_name[i] == L'P' || app_name[i] == L'p') &&
-                (app_name[i+1] == L'o' || app_name[i+1] == L'O') &&
-                (app_name[i+2] == L'w' || app_name[i+2] == L'W') &&
-                (app_name[i+3] == L'e' || app_name[i+3] == L'E') &&
-                (app_name[i+4] == L'r' || app_name[i+4] == L'R') &&
-                (app_name[i+5] == L's' || app_name[i+5] == L'S') &&
-                (app_name[i+6] == L'h' || app_name[i+6] == L'H') &&
-                (app_name[i+7] == L'e' || app_name[i+7] == L'E') &&
-                (app_name[i+8] == L'l' || app_name[i+8] == L'L') &&
-                (app_name[i+9] == L'l' || app_name[i+9] == L'L')) {
-                return true;
-            }
-        }
+        return contains_case_insensitive(app_name, L"PowerShell");
     }
     return false;
 }
