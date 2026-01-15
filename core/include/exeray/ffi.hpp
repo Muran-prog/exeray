@@ -2,6 +2,7 @@
 
 #include "exeray/engine.hpp"
 #include <memory>
+#include <optional>
 #include <string>
 
 #ifdef _WIN32
@@ -128,37 +129,48 @@ inline std::size_t event_count(const Handle& h) {
     return h.graph().count();
 }
 
-inline std::uint64_t event_get_id(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
+namespace detail {
+
+/// @brief Private helper to get EventView by index with bounds checking.
+/// @param h Handle reference.
+/// @param index Zero-based event index.
+/// @return Optional EventView, empty if index is out of bounds.
+inline std::optional<event::EventView> get_event_view(const Handle& h, std::size_t index) {
+    if (index >= h.graph().count()) return std::nullopt;
     // IDs are 1-indexed, so we need id = index + 1
-    return h.graph().get(static_cast<event::EventId>(index + 1)).id();
+    return h.graph().get(static_cast<event::EventId>(index + 1));
+}
+
+} // namespace detail
+
+inline std::uint64_t event_get_id(const Handle& h, std::size_t index) {
+    auto ev = detail::get_event_view(h, index);
+    return ev ? ev->id() : 0;
 }
 
 inline std::uint64_t event_get_parent(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
-    return h.graph().get(static_cast<event::EventId>(index + 1)).parent_id();
+    auto ev = detail::get_event_view(h, index);
+    return ev ? ev->parent_id() : 0;
 }
 
 inline std::uint64_t event_get_timestamp(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
-    return h.graph().get(static_cast<event::EventId>(index + 1)).timestamp();
+    auto ev = detail::get_event_view(h, index);
+    return ev ? ev->timestamp() : 0;
 }
 
 inline std::uint8_t event_get_category(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
-    return static_cast<std::uint8_t>(
-        h.graph().get(static_cast<event::EventId>(index + 1)).category());
+    auto ev = detail::get_event_view(h, index);
+    return ev ? static_cast<std::uint8_t>(ev->category()) : 0;
 }
 
 inline std::uint8_t event_get_status(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
-    return static_cast<std::uint8_t>(
-        h.graph().get(static_cast<event::EventId>(index + 1)).status());
+    auto ev = detail::get_event_view(h, index);
+    return ev ? static_cast<std::uint8_t>(ev->status()) : 0;
 }
 
 inline std::uint8_t event_get_operation(const Handle& h, std::size_t index) {
-    if (index >= h.graph().count()) return 0;
-    return h.graph().get(static_cast<event::EventId>(index + 1)).operation();
+    auto ev = detail::get_event_view(h, index);
+    return ev ? ev->operation() : 0;
 }
 
 }
