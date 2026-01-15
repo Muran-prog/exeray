@@ -1,6 +1,8 @@
 # Build artifacts
 /target/
 /core/build/
+/core/build_win/
+/build_test/
 
 # IDE
 .idea/
