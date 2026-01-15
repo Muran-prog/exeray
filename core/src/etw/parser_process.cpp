@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -21,14 +22,6 @@ enum class ProcessEventId : uint16_t {
     ImageLoad = 5
 };
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Process;
-}
-
 /// @brief Parse ProcessStart event (Event ID 1).
 ///
 /// UserData layout (version 3+):
@@ -44,7 +37,7 @@ void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
 ///   CommandLine: Unicode string (null-terminated)
 ParsedEvent parse_process_start(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Process);
     result.operation = static_cast<uint8_t>(event::ProcessOp::Create);
     result.payload.category = event::Category::Process;
 
@@ -132,7 +125,7 @@ ParsedEvent parse_process_start(const EVENT_RECORD* record, event::StringPool* s
 /// @brief Parse ProcessStop event (Event ID 2).
 ParsedEvent parse_process_stop(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Process);
     result.operation = static_cast<uint8_t>(event::ProcessOp::Terminate);
     result.payload.category = event::Category::Process;
 
@@ -182,7 +175,7 @@ ParsedEvent parse_process_stop(const EVENT_RECORD* record, event::StringPool* /*
 ///   FileName: Unicode string
 ParsedEvent parse_image_load(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Process);
     result.operation = static_cast<uint8_t>(event::ProcessOp::LoadLibrary);
     result.payload.category = event::Category::Process;
 

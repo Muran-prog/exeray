@@ -9,13 +9,6 @@
 
 namespace exeray::etw::dns {
 
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Dns;
-    out.pid = record->EventHeader.ProcessId;
-}
-
 std::wstring_view extract_wstring(const uint8_t* data, size_t max_len) {
     if (data == nullptr || max_len < 2) {
         return {};

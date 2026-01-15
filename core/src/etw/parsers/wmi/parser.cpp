@@ -17,7 +17,7 @@ ParsedEvent parse_wmi_operation(const EVENT_RECORD* record,
                                  event::StringPool* strings,
                                  event::WmiOp op) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Wmi);
     result.operation = static_cast<uint8_t>(op);
     result.payload.category = event::Category::Wmi;
 

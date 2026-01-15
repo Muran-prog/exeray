@@ -69,9 +69,6 @@ std::optional<TdhPropertyValue> extract_property(
     ULONG& user_data_length
 );
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out);
-
 /// @brief Get wide string property or empty.
 std::wstring get_wstring_prop(const TdhParsedEvent& event, const std::wstring& name);
 

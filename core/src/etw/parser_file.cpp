@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -22,14 +23,6 @@ enum class FileEventId : uint16_t {
     Write = 15,
     Delete = 26
 };
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::FileSystem;
-}
 
 /// @brief Initialize file payload with defaults.
 void init_file_payload(ParsedEvent& result) {
@@ -52,7 +45,7 @@ void init_file_payload(ParsedEvent& result) {
 ///   OpenPath: Unicode string
 ParsedEvent parse_file_create(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::FileSystem);
     result.operation = static_cast<uint8_t>(event::FileOp::Create);
     init_file_payload(result);
 
@@ -108,7 +101,7 @@ ParsedEvent parse_file_create(const EVENT_RECORD* record, event::StringPool* str
 /// @brief Parse file Cleanup event (Event ID 11).
 ParsedEvent parse_file_cleanup(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::FileSystem);
     // Cleanup maps to Create with status info (file close)
     result.operation = static_cast<uint8_t>(event::FileOp::Create);
     result.status = event::Status::Success;
@@ -129,7 +122,7 @@ ParsedEvent parse_file_cleanup(const EVENT_RECORD* record, event::StringPool* /*
 ///   IoFlags: UINT32
 ParsedEvent parse_file_read(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::FileSystem);
     result.operation = static_cast<uint8_t>(event::FileOp::Read);
     init_file_payload(result);
 
@@ -163,7 +156,7 @@ ParsedEvent parse_file_read(const EVENT_RECORD* record, event::StringPool* /*str
 /// @brief Parse file Write event (Event ID 15).
 ParsedEvent parse_file_write(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::FileSystem);
     result.operation = static_cast<uint8_t>(event::FileOp::Write);
     init_file_payload(result);
 
@@ -197,7 +190,7 @@ ParsedEvent parse_file_write(const EVENT_RECORD* record, event::StringPool* /*st
 /// @brief Parse file Delete event (Event ID 26).
 ParsedEvent parse_file_delete(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::FileSystem);
     result.operation = static_cast<uint8_t>(event::FileOp::Delete);
     init_file_payload(result);
     result.valid = true;

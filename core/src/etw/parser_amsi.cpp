@@ -7,6 +7,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -66,14 +67,6 @@ const char* amsi_result_name(uint32_t result) {
         case 1: return "NOT_DETECTED";
         default: return "SUSPICIOUS";
     }
-}
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Amsi;
-    out.pid = record->EventHeader.ProcessId;
 }
 
 /// @brief Extract wide string from event data.
@@ -151,7 +144,7 @@ void log_amsi_scan(uint32_t pid, uint32_t result, uint32_t content_size,
 ///   content: WSTRING/BINARY (scanned content, may be truncated)
 ParsedEvent parse_scan_buffer_event(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Amsi);
     result.operation = static_cast<uint8_t>(event::AmsiOp::Scan);
     result.payload.category = event::Category::Amsi;
 

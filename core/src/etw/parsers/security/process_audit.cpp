@@ -13,7 +13,7 @@ namespace exeray::etw::security {
 
 ParsedEvent parse_process_create(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Security);
     result.category = event::Category::Security;
     result.operation = static_cast<uint8_t>(event::SecurityOp::ProcessCreate);
     result.payload.category = event::Category::Security;
@@ -67,7 +67,7 @@ ParsedEvent parse_process_create(const EVENT_RECORD* record, event::StringPool* 
 
 ParsedEvent parse_process_terminate(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Security);
     result.category = event::Category::Security;
     result.operation = static_cast<uint8_t>(event::SecurityOp::ProcessTerminate);
     result.payload.category = event::Category::Security;

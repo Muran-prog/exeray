@@ -13,7 +13,7 @@ namespace exeray::etw::security {
 
 ParsedEvent parse_token_rights(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Security);
     result.category = event::Category::Security;
     result.operation = static_cast<uint8_t>(event::SecurityOp::PrivilegeAdjust);
     result.payload.category = event::Category::Security;

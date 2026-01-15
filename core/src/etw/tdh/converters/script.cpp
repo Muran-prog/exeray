@@ -5,6 +5,7 @@
 
 #include "exeray/etw/tdh/converters.hpp"
 #include "exeray/etw/tdh/internal.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/event/string_pool.hpp"
 
 namespace exeray::etw {
@@ -17,8 +18,7 @@ ParsedEvent convert_tdh_to_script(
     event::StringPool* strings
 ) {
     ParsedEvent result{};
-    extract_common(record, result);
-    result.category = event::Category::Script;
+    extract_common(record, result, event::Category::Script);
     result.payload.category = event::Category::Script;
     
     switch (tdh_event.event_id) {

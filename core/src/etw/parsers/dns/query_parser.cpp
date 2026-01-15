@@ -17,7 +17,7 @@ namespace exeray::etw::dns {
 ParsedEvent parse_query_completed(const EVENT_RECORD* record,
                                    event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Dns);
     result.operation = static_cast<uint8_t>(event::DnsOp::Response);
     result.payload.category = event::Category::Dns;
 
@@ -106,7 +106,7 @@ ParsedEvent parse_query_completed(const EVENT_RECORD* record,
 ParsedEvent parse_query_failed(const EVENT_RECORD* record,
                                 event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Dns);
     result.operation = static_cast<uint8_t>(event::DnsOp::Failure);
     result.payload.category = event::Category::Dns;
 

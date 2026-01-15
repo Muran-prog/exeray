@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 
@@ -37,13 +38,6 @@ bool is_remote_thread(uint32_t creator_pid, uint32_t target_pid) {
     return creator_pid != target_pid;
 }
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Thread;
-}
-
 /// @brief Parse Thread Start event (Event ID 1).
 ///
 /// UserData layout (Thread_TypeGroup1, EventVersion 3):
@@ -63,7 +57,7 @@ void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
 ///   ThreadFlags: UINT8
 ParsedEvent parse_thread_start(const EVENT_RECORD* record) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Thread);
     result.operation = static_cast<uint8_t>(event::ThreadOp::Start);
     result.payload.category = event::Category::Thread;
 
@@ -126,7 +120,7 @@ ParsedEvent parse_thread_start(const EVENT_RECORD* record) {
 /// @brief Parse Thread End event (Event ID 2).
 ParsedEvent parse_thread_end(const EVENT_RECORD* record) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Thread);
     result.operation = static_cast<uint8_t>(event::ThreadOp::End);
     result.payload.category = event::Category::Thread;
 

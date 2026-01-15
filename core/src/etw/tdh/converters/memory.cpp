@@ -5,6 +5,7 @@
 
 #include "exeray/etw/tdh/converters.hpp"
 #include "exeray/etw/tdh/internal.hpp"
+#include "exeray/etw/parser_utils.hpp"
 
 namespace exeray::etw {
 
@@ -16,8 +17,7 @@ ParsedEvent convert_tdh_to_memory(
     event::StringPool* /*strings*/
 ) {
     ParsedEvent result{};
-    extract_common(record, result);
-    result.category = event::Category::Memory;
+    extract_common(record, result, event::Category::Memory);
     result.payload.category = event::Category::Memory;
     
     switch (tdh_event.event_id) {

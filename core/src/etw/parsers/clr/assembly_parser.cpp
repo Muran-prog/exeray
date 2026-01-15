@@ -15,7 +15,7 @@ ParsedEvent parse_assembly_event(const EVENT_RECORD* record,
                                   event::StringPool* strings,
                                   event::ClrOp op) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Clr);
     result.operation = static_cast<uint8_t>(op);
     result.payload.category = event::Category::Clr;
 

@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 
@@ -28,14 +29,6 @@ enum class NetworkEventId : uint16_t {
 constexpr uint8_t PROTO_TCP = 6;
 constexpr uint8_t PROTO_UDP = 17;
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Network;
-}
-
 /// @brief Initialize network payload with defaults.
 void init_network_payload(ParsedEvent& result) {
     result.payload.category = event::Category::Network;
@@ -59,7 +52,7 @@ void init_network_payload(ParsedEvent& result) {
 ///   RemotePort: UINT16
 ParsedEvent parse_tcp_connect(const EVENT_RECORD* record) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Network);
     result.operation = static_cast<uint8_t>(event::NetworkOp::Connect);
     init_network_payload(result);
     result.payload.network.protocol = PROTO_TCP;
@@ -114,7 +107,7 @@ ParsedEvent parse_tcp_connect(const EVENT_RECORD* record) {
 /// @brief Parse TCP data transfer event (send/receive).
 ParsedEvent parse_tcp_transfer(const EVENT_RECORD* record, event::NetworkOp op) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Network);
     result.operation = static_cast<uint8_t>(op);
     init_network_payload(result);
     result.payload.network.protocol = PROTO_TCP;
@@ -142,7 +135,7 @@ ParsedEvent parse_tcp_transfer(const EVENT_RECORD* record, event::NetworkOp op) 
 /// @brief Parse UDP event.
 ParsedEvent parse_udp_event(const EVENT_RECORD* record, event::NetworkOp op) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Network);
     result.operation = static_cast<uint8_t>(op);
     init_network_payload(result);
     result.payload.network.protocol = PROTO_UDP;

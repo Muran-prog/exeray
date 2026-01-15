@@ -15,7 +15,7 @@ namespace exeray::etw::security {
 
 ParsedEvent parse_logon_success(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Security);
     result.category = event::Category::Security;
     result.operation = static_cast<uint8_t>(event::SecurityOp::Logon);
     result.payload.category = event::Category::Security;
@@ -71,7 +71,7 @@ ParsedEvent parse_logon_success(const EVENT_RECORD* record, event::StringPool* s
 
 ParsedEvent parse_logon_failed(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Security);
     result.category = event::Category::Security;
     result.operation = static_cast<uint8_t>(event::SecurityOp::LogonFailed);
     result.payload.category = event::Category::Security;

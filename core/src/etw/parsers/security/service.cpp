@@ -14,7 +14,7 @@ namespace exeray::etw::security {
 
 ParsedEvent parse_service_install(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    exeray::etw::extract_common(record, result, event::Category::Service);
     result.category = event::Category::Service;
     result.operation = static_cast<uint8_t>(event::ServiceOp::Install);
     result.payload.category = event::Category::Service;

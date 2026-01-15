@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -21,14 +22,6 @@ enum class RegistryEventId : uint16_t {
     SetValue = 5,
     DeleteValue = 6
 };
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Registry;
-}
 
 /// @brief Initialize registry payload with defaults.
 void init_registry_payload(ParsedEvent& result) {
@@ -50,7 +43,7 @@ void init_registry_payload(ParsedEvent& result) {
 ///   RelativeName: Unicode string
 ParsedEvent parse_key_event(const EVENT_RECORD* record, event::RegistryOp op, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Registry);
     result.operation = static_cast<uint8_t>(op);
     init_registry_payload(result);
 
@@ -93,7 +86,7 @@ ParsedEvent parse_key_event(const EVENT_RECORD* record, event::RegistryOp op, ev
 ///   ValueName: Unicode string
 ParsedEvent parse_value_event(const EVENT_RECORD* record, event::RegistryOp op, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Registry);
     result.operation = static_cast<uint8_t>(op);
     init_registry_payload(result);
 

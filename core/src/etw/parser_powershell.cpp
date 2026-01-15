@@ -7,6 +7,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -123,14 +124,6 @@ std::string_view get_matched_pattern(std::string_view script) {
     return {};
 }
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Script;
-    out.pid = record->EventHeader.ProcessId;
-}
-
 /// @brief Extract wide string from event data.
 /// @param data Pointer to start of string.
 /// @param max_len Maximum bytes to read.
@@ -176,7 +169,7 @@ std::string wstring_to_string(std::wstring_view wstr) {
 ///   Path: WSTRING (optional script file path)
 ParsedEvent parse_script_block_event(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Script);
     result.operation = static_cast<uint8_t>(event::ScriptOp::Execute);
     result.payload.category = event::Category::Script;
 
@@ -235,7 +228,7 @@ ParsedEvent parse_script_block_event(const EVENT_RECORD* record, event::StringPo
 /// Logging but still useful for tracking command execution.
 ParsedEvent parse_module_event(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Script);
     result.operation = static_cast<uint8_t>(event::ScriptOp::Module);
     result.payload.category = event::Category::Script;
 

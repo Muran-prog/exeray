@@ -6,15 +6,13 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/event/types.hpp"
 
 #include <string>
 #include <string_view>
 
 namespace exeray::etw::clr {
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out);
 
 /// @brief Extract wide string from event data.
 std::wstring_view extract_wstring(const uint8_t* data, size_t max_len);

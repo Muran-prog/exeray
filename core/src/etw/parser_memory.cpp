@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/logging.hpp"
@@ -41,13 +42,6 @@ bool is_rwx_protection(uint32_t protection) {
            (protection == RWX_PAGE_EXECUTE_WRITECOPY);
 }
 
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Memory;
-}
-
 /// @brief Parse VirtualAlloc event (Event ID 98).
 ///
 /// UserData layout (PageFault_VirtualAlloc):
@@ -57,7 +51,7 @@ void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
 ///   Flags:       UINT32 (protection/allocation type)
 ParsedEvent parse_virtual_alloc(const EVENT_RECORD* record) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Memory);
     result.operation = static_cast<uint8_t>(event::MemoryOp::Alloc);
     result.payload.category = event::Category::Memory;
 
@@ -139,7 +133,7 @@ ParsedEvent parse_virtual_alloc(const EVENT_RECORD* record) {
 /// Same structure as VirtualAlloc.
 ParsedEvent parse_virtual_free(const EVENT_RECORD* record) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Memory);
     result.operation = static_cast<uint8_t>(event::MemoryOp::Free);
     result.payload.category = event::Category::Memory;
 

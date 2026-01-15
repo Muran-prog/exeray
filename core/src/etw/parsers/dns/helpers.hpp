@@ -13,11 +13,9 @@
 #include <string_view>
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 
 namespace exeray::etw::dns {
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out);
 
 /// @brief Extract wide string from event data.
 /// @param data Pointer to start of string.

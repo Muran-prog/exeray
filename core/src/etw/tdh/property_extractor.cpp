@@ -131,12 +131,6 @@ std::optional<TdhPropertyValue> extract_property(
     return std::nullopt;
 }
 
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-}
-
 }  // namespace exeray::etw::tdh::detail
 
 #else  // !_WIN32

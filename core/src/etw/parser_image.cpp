@@ -7,6 +7,7 @@
 #ifdef _WIN32
 
 #include "exeray/etw/parser.hpp"
+#include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -23,14 +24,6 @@ enum class ImageEventId : uint16_t {
     Unload = 2,   ///< Image unloaded from process
     Load = 10     ///< Image loaded into process
 };
-
-/// @brief Extract common fields from EVENT_RECORD header.
-void extract_common(const EVENT_RECORD* record, ParsedEvent& out) {
-    out.pid = record->EventHeader.ProcessId;
-    out.timestamp = static_cast<uint64_t>(record->EventHeader.TimeStamp.QuadPart);
-    out.status = event::Status::Success;
-    out.category = event::Category::Image;
-}
 
 /// @brief Check if a path is suspicious (temp/appdata directories).
 ///
@@ -78,7 +71,7 @@ bool is_suspicious_path(const wchar_t* path, size_t len) {
 ///   FileName: Unicode string (null-terminated)
 ParsedEvent parse_image_load(const EVENT_RECORD* record, event::StringPool* strings) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Image);
     result.operation = static_cast<uint8_t>(event::ImageOp::Load);
     result.payload.category = event::Category::Image;
 
@@ -165,7 +158,7 @@ ParsedEvent parse_image_load(const EVENT_RECORD* record, event::StringPool* stri
 /// @brief Parse Image Unload event (Event ID 2).
 ParsedEvent parse_image_unload(const EVENT_RECORD* record, event::StringPool* /*strings*/) {
     ParsedEvent result{};
-    extract_common(record, result);
+    extract_common(record, result, event::Category::Image);
     result.operation = static_cast<uint8_t>(event::ImageOp::Unload);
     result.payload.category = event::Category::Image;
 
