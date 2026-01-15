@@ -46,7 +46,10 @@ add_library(exeray_core STATIC
     src/etw/parsers/security/service.cpp
     src/etw/parsers/security/token.cpp
     src/etw/parsers/security/dispatcher.cpp
-    src/etw/parser_wmi.cpp
+    src/etw/parsers/wmi/detection.cpp
+    src/etw/parsers/wmi/helpers.cpp
+    src/etw/parsers/wmi/parser.cpp
+    src/etw/parsers/wmi/dispatcher.cpp
     src/etw/parsers/clr/detection.cpp
     src/etw/parsers/clr/helpers.cpp
     src/etw/parsers/clr/assembly_parser.cpp

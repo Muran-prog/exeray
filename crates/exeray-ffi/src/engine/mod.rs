@@ -7,9 +7,7 @@ mod monitoring;
 use crate::ffi;
 use crate::view_state::ViewState;
 
-pub use control::*;
-pub use events::*;
-pub use monitoring::*;
+// Note: These modules extend Engine with impl blocks, no items to re-export.
 
 /// Safe wrapper around the ExeRay C++ engine.
 pub struct Engine(pub(crate) cxx::UniquePtr<ffi::Handle>);
