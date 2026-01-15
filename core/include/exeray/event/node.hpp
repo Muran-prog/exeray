@@ -8,7 +8,7 @@
  * EventView class for type-safe, immutable access to event data.
  */
 
-#include <cassert>
+#include <stdexcept>
 #include <cstdint>
 #include <type_traits>
 
@@ -89,9 +89,11 @@ public:
      * @brief Construct a view from an EventNode pointer.
      * @param node Pointer to the event node (must not be null).
      */
-    explicit EventView(const EventNode* node) noexcept
+    explicit EventView(const EventNode* node)
         : node_(node) {
-        assert(node_ != nullptr && "EventView requires non-null node");
+        if (node_ == nullptr) [[unlikely]] {
+            throw std::logic_error("EventView requires non-null node");
+        }
     }
 
     /// @name Core Accessors
@@ -125,57 +127,75 @@ public:
     /// @name Typed Operation Accessors
     /// @{
 
-    /// Get operation as FileOp (asserts correct category).
-    [[nodiscard]] FileOp file_op() const noexcept {
-        assert(category() == Category::FileSystem && "Invalid category for file_op");
+    /// Get operation as FileOp (throws on invalid category).
+    [[nodiscard]] FileOp file_op() const {
+        if (category() != Category::FileSystem) [[unlikely]] {
+            throw std::logic_error("Invalid category for file_op");
+        }
         return static_cast<FileOp>(node_->operation);
     }
 
-    /// Get operation as RegistryOp (asserts correct category).
-    [[nodiscard]] RegistryOp registry_op() const noexcept {
-        assert(category() == Category::Registry && "Invalid category for registry_op");
+    /// Get operation as RegistryOp (throws on invalid category).
+    [[nodiscard]] RegistryOp registry_op() const {
+        if (category() != Category::Registry) [[unlikely]] {
+            throw std::logic_error("Invalid category for registry_op");
+        }
         return static_cast<RegistryOp>(node_->operation);
     }
 
-    /// Get operation as NetworkOp (asserts correct category).
-    [[nodiscard]] NetworkOp network_op() const noexcept {
-        assert(category() == Category::Network && "Invalid category for network_op");
+    /// Get operation as NetworkOp (throws on invalid category).
+    [[nodiscard]] NetworkOp network_op() const {
+        if (category() != Category::Network) [[unlikely]] {
+            throw std::logic_error("Invalid category for network_op");
+        }
         return static_cast<NetworkOp>(node_->operation);
     }
 
-    /// Get operation as ProcessOp (asserts correct category).
-    [[nodiscard]] ProcessOp process_op() const noexcept {
-        assert(category() == Category::Process && "Invalid category for process_op");
+    /// Get operation as ProcessOp (throws on invalid category).
+    [[nodiscard]] ProcessOp process_op() const {
+        if (category() != Category::Process) [[unlikely]] {
+            throw std::logic_error("Invalid category for process_op");
+        }
         return static_cast<ProcessOp>(node_->operation);
     }
 
-    /// Get operation as SchedulerOp (asserts correct category).
-    [[nodiscard]] SchedulerOp scheduler_op() const noexcept {
-        assert(category() == Category::Scheduler && "Invalid category for scheduler_op");
+    /// Get operation as SchedulerOp (throws on invalid category).
+    [[nodiscard]] SchedulerOp scheduler_op() const {
+        if (category() != Category::Scheduler) [[unlikely]] {
+            throw std::logic_error("Invalid category for scheduler_op");
+        }
         return static_cast<SchedulerOp>(node_->operation);
     }
 
-    /// Get operation as InputOp (asserts correct category).
-    [[nodiscard]] InputOp input_op() const noexcept {
-        assert(category() == Category::Input && "Invalid category for input_op");
+    /// Get operation as InputOp (throws on invalid category).
+    [[nodiscard]] InputOp input_op() const {
+        if (category() != Category::Input) [[unlikely]] {
+            throw std::logic_error("Invalid category for input_op");
+        }
         return static_cast<InputOp>(node_->operation);
     }
 
-    /// Get operation as ImageOp (asserts correct category).
-    [[nodiscard]] ImageOp image_op() const noexcept {
-        assert(category() == Category::Image && "Invalid category for image_op");
+    /// Get operation as ImageOp (throws on invalid category).
+    [[nodiscard]] ImageOp image_op() const {
+        if (category() != Category::Image) [[unlikely]] {
+            throw std::logic_error("Invalid category for image_op");
+        }
         return static_cast<ImageOp>(node_->operation);
     }
 
-    /// Get operation as ThreadOp (asserts correct category).
-    [[nodiscard]] ThreadOp thread_op() const noexcept {
-        assert(category() == Category::Thread && "Invalid category for thread_op");
+    /// Get operation as ThreadOp (throws on invalid category).
+    [[nodiscard]] ThreadOp thread_op() const {
+        if (category() != Category::Thread) [[unlikely]] {
+            throw std::logic_error("Invalid category for thread_op");
+        }
         return static_cast<ThreadOp>(node_->operation);
     }
 
-    /// Get operation as MemoryOp (asserts correct category).
-    [[nodiscard]] MemoryOp memory_op() const noexcept {
-        assert(category() == Category::Memory && "Invalid category for memory_op");
+    /// Get operation as MemoryOp (throws on invalid category).
+    [[nodiscard]] MemoryOp memory_op() const {
+        if (category() != Category::Memory) [[unlikely]] {
+            throw std::logic_error("Invalid category for memory_op");
+        }
         return static_cast<MemoryOp>(node_->operation);
     }
 
@@ -184,57 +204,75 @@ public:
     /// @name Typed Payload Accessors
     /// @{
 
-    /// Get file payload reference (asserts correct category).
+    /// Get file payload reference (throws on invalid category).
     [[nodiscard]] const FilePayload& as_file() const {
-        assert(category() == Category::FileSystem && "Invalid category for as_file");
+        if (category() != Category::FileSystem) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_file");
+        }
         return node_->payload.file;
     }
 
-    /// Get registry payload reference (asserts correct category).
+    /// Get registry payload reference (throws on invalid category).
     [[nodiscard]] const RegistryPayload& as_registry() const {
-        assert(category() == Category::Registry && "Invalid category for as_registry");
+        if (category() != Category::Registry) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_registry");
+        }
         return node_->payload.registry;
     }
 
-    /// Get network payload reference (asserts correct category).
+    /// Get network payload reference (throws on invalid category).
     [[nodiscard]] const NetworkPayload& as_network() const {
-        assert(category() == Category::Network && "Invalid category for as_network");
+        if (category() != Category::Network) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_network");
+        }
         return node_->payload.network;
     }
 
-    /// Get process payload reference (asserts correct category).
+    /// Get process payload reference (throws on invalid category).
     [[nodiscard]] const ProcessPayload& as_process() const {
-        assert(category() == Category::Process && "Invalid category for as_process");
+        if (category() != Category::Process) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_process");
+        }
         return node_->payload.process;
     }
 
-    /// Get scheduler payload reference (asserts correct category).
+    /// Get scheduler payload reference (throws on invalid category).
     [[nodiscard]] const SchedulerPayload& as_scheduler() const {
-        assert(category() == Category::Scheduler && "Invalid category for as_scheduler");
+        if (category() != Category::Scheduler) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_scheduler");
+        }
         return node_->payload.scheduler;
     }
 
-    /// Get input payload reference (asserts correct category).
+    /// Get input payload reference (throws on invalid category).
     [[nodiscard]] const InputPayload& as_input() const {
-        assert(category() == Category::Input && "Invalid category for as_input");
+        if (category() != Category::Input) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_input");
+        }
         return node_->payload.input;
     }
 
-    /// Get image payload reference (asserts correct category).
+    /// Get image payload reference (throws on invalid category).
     [[nodiscard]] const ImagePayload& as_image() const {
-        assert(category() == Category::Image && "Invalid category for as_image");
+        if (category() != Category::Image) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_image");
+        }
         return node_->payload.image;
     }
 
-    /// Get thread payload reference (asserts correct category).
+    /// Get thread payload reference (throws on invalid category).
     [[nodiscard]] const ThreadPayload& as_thread() const {
-        assert(category() == Category::Thread && "Invalid category for as_thread");
+        if (category() != Category::Thread) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_thread");
+        }
         return node_->payload.thread;
     }
 
-    /// Get memory payload reference (asserts correct category).
+    /// Get memory payload reference (throws on invalid category).
     [[nodiscard]] const MemoryPayload& as_memory() const {
-        assert(category() == Category::Memory && "Invalid category for as_memory");
+        if (category() != Category::Memory) [[unlikely]] {
+            throw std::logic_error("Invalid category for as_memory");
+        }
         return node_->payload.memory;
     }
 
