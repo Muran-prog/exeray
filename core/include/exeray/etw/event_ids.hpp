@@ -88,7 +88,7 @@ namespace security {
     constexpr uint16_t LOGON_SUCCESS = 4624;       ///< Successful logon
     constexpr uint16_t LOGON_FAILED = 4625;        ///< Failed logon attempt
     constexpr uint16_t PROCESS_CREATE = 4688;      ///< New process created
-    constexpr uint16_t PROCESS_TERMINATE = 4689;   ///< Process terminated
+    constexpr uint16_t PROCESS_EXIT = 4689;       ///< Process terminated
     constexpr uint16_t SERVICE_INSTALLED = 4697;  ///< Service installed
     constexpr uint16_t TOKEN_RIGHTS = 4703;        ///< Token rights adjusted
 }  // namespace security

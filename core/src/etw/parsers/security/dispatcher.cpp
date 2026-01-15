@@ -37,7 +37,7 @@ ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* 
             return security::parse_logon_failed(record, strings);
         case ids::security::PROCESS_CREATE:
             return security::parse_process_create(record, strings);
-        case ids::security::PROCESS_TERMINATE:
+        case ids::security::PROCESS_EXIT:
             return security::parse_process_terminate(record, strings);
         case ids::security::SERVICE_INSTALLED:
             return security::parse_service_install(record, strings);
