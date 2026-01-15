@@ -63,11 +63,51 @@ StringId StringPool::intern_wide(std::wstring_view wstr) {
         return intern("");
     }
 
-    // Convert wide string to UTF-8 (simplified - handles ASCII range)
-    // For full Unicode support, use WideCharToMultiByte on Windows
+    // Convert wide string to UTF-8 with full Unicode support including surrogate pairs
     std::string utf8;
-    utf8.reserve(wstr.size());
-    for (wchar_t wc : wstr) {
+    utf8.reserve(wstr.size() * 3);  // Worst case: 3 bytes per BMP character
+
+    for (std::size_t i = 0; i < wstr.size(); ++i) {
+        const auto wc = static_cast<std::uint32_t>(wstr[i]);
+
+        // Check for high surrogate (0xD800-0xDBFF)
+        if (wc >= 0xD800 && wc <= 0xDBFF) {
+            // Need a low surrogate to follow
+            if (i + 1 < wstr.size()) {
+                const auto low = static_cast<std::uint32_t>(wstr[i + 1]);
+                // Check for low surrogate (0xDC00-0xDFFF)
+                if (low >= 0xDC00 && low <= 0xDFFF) {
+                    // Valid surrogate pair: decode to code point
+                    // code_point = 0x10000 + ((high - 0xD800) << 10) + (low - 0xDC00)
+                    const std::uint32_t code_point =
+                        0x10000 + ((wc - 0xD800) << 10) + (low - 0xDC00);
+                    ++i;  // Consume the low surrogate
+
+                    // Encode as 4-byte UTF-8: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                    utf8.push_back(static_cast<char>(0xF0 | (code_point >> 18)));
+                    utf8.push_back(static_cast<char>(0x80 | ((code_point >> 12) & 0x3F)));
+                    utf8.push_back(static_cast<char>(0x80 | ((code_point >> 6) & 0x3F)));
+                    utf8.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
+                    continue;
+                }
+            }
+            // Unpaired high surrogate: replace with U+FFFD (replacement character)
+            utf8.push_back(static_cast<char>(0xEF));
+            utf8.push_back(static_cast<char>(0xBF));
+            utf8.push_back(static_cast<char>(0xBD));
+            continue;
+        }
+
+        // Check for unpaired low surrogate (0xDC00-0xDFFF)
+        if (wc >= 0xDC00 && wc <= 0xDFFF) {
+            // Unpaired low surrogate: replace with U+FFFD
+            utf8.push_back(static_cast<char>(0xEF));
+            utf8.push_back(static_cast<char>(0xBF));
+            utf8.push_back(static_cast<char>(0xBD));
+            continue;
+        }
+
+        // Regular BMP character encoding
         if (wc < 0x80) {
             utf8.push_back(static_cast<char>(wc));
         } else if (wc < 0x800) {
