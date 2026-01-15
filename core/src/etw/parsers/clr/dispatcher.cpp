@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -18,16 +19,15 @@ ParsedEvent parse_clr_event(const EVENT_RECORD* record, event::StringPool* strin
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<clr::ClrEventId>(
-        record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case clr::ClrEventId::AssemblyLoadStart:
-        case clr::ClrEventId::AssemblyLoadStop:
+        case ids::clr::ASSEMBLY_LOAD_START:
+        case ids::clr::ASSEMBLY_LOAD_STOP:
             return clr::parse_assembly_event(record, strings, event::ClrOp::AssemblyLoad);
-        case clr::ClrEventId::AssemblyUnload:
+        case ids::clr::ASSEMBLY_UNLOAD:
             return clr::parse_assembly_event(record, strings, event::ClrOp::AssemblyUnload);
-        case clr::ClrEventId::MethodJitStart:
+        case ids::clr::METHOD_JIT_START:
             return clr::parse_jit_event(record, strings);
         default:
             // Unknown event ID - try TDH fallback

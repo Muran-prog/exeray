@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include "constants.hpp"
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -27,21 +28,20 @@ ParsedEvent parse_security_event(const EVENT_RECORD* record, event::StringPool* 
         return ParsedEvent{.valid = false};
     }
     
-    const auto event_id = static_cast<security::SecurityEventId>(
-        record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
     
     switch (event_id) {
-        case security::SecurityEventId::LogonSuccess:
+        case ids::security::LOGON_SUCCESS:
             return security::parse_logon_success(record, strings);
-        case security::SecurityEventId::LogonFailed:
+        case ids::security::LOGON_FAILED:
             return security::parse_logon_failed(record, strings);
-        case security::SecurityEventId::ProcessCreate:
+        case ids::security::PROCESS_CREATE:
             return security::parse_process_create(record, strings);
-        case security::SecurityEventId::ProcessTerminate:
+        case ids::security::PROCESS_TERMINATE:
             return security::parse_process_terminate(record, strings);
-        case security::SecurityEventId::ServiceInstall:
+        case ids::security::SERVICE_INSTALL:
             return security::parse_service_install(record, strings);
-        case security::SecurityEventId::TokenRights:
+        case ids::security::TOKEN_RIGHTS:
             return security::parse_token_rights(record, strings);
         default:
             if (auto tdh_result = parse_with_tdh(record)) {

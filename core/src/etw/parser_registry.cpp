@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -14,14 +15,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Registry event IDs from Microsoft-Windows-Kernel-Registry provider.
-enum class RegistryEventId : uint16_t {
-    CreateKey = 1,
-    OpenKey = 2,
-    SetValue = 5,
-    DeleteValue = 6
-};
 
 /// @brief Initialize registry payload with defaults.
 void init_registry_payload(ParsedEvent& result) {
@@ -138,16 +131,16 @@ ParsedEvent parse_registry_event(const EVENT_RECORD* record, event::StringPool* 
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<RegistryEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case RegistryEventId::CreateKey:
+        case ids::registry::CREATE_KEY:
             return parse_key_event(record, event::RegistryOp::CreateKey, strings);
-        case RegistryEventId::OpenKey:
+        case ids::registry::OPEN_KEY:
             return parse_key_event(record, event::RegistryOp::QueryValue, strings);
-        case RegistryEventId::SetValue:
+        case ids::registry::SET_VALUE:
             return parse_value_event(record, event::RegistryOp::SetValue, strings);
-        case RegistryEventId::DeleteValue:
+        case ids::registry::DELETE_VALUE:
             return parse_value_event(record, event::RegistryOp::DeleteValue, strings);
         default:
             // Unknown event - try TDH fallback

@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -21,11 +22,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// AMSI event IDs from Microsoft-Antimalware-Scan-Interface provider.
-enum class AmsiEventId : uint16_t {
-    ScanBuffer = 1101  ///< AmsiScanBuffer called
-};
 
 /// @brief AMSI scan result values.
 ///
@@ -227,11 +223,10 @@ ParsedEvent parse_amsi_event(const EVENT_RECORD* record, event::StringPool* stri
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<AmsiEventId>(
-        record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case AmsiEventId::ScanBuffer:
+        case ids::amsi::SCAN_BUFFER:
             return parse_scan_buffer_event(record, strings);
         default:
             // Unknown event ID - try TDH fallback

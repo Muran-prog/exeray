@@ -5,19 +5,12 @@
 
 #ifdef _WIN32
 
-#include <cstdint>
+#include "exeray/etw/event_ids.hpp"
 
 namespace exeray::etw::security {
 
-/// Security Auditing event IDs from Microsoft-Windows-Security-Auditing provider.
-enum class SecurityEventId : uint16_t {
-    LogonSuccess = 4624,       ///< Successful logon
-    LogonFailed = 4625,        ///< Failed logon attempt
-    ProcessCreate = 4688,      ///< New process created
-    ProcessTerminate = 4689,   ///< Process terminated
-    ServiceInstall = 4697,     ///< Service installed
-    TokenRights = 4703         ///< Token rights adjusted
-};
+/// Alias for centralized security event IDs.
+namespace event_ids = exeray::etw::ids::security;
 
 /// Logon type values for Event 4624/4625.
 namespace logon_types {

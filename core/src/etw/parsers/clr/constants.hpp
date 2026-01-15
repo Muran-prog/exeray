@@ -5,17 +5,12 @@
 
 #ifdef _WIN32
 
-#include <cstdint>
+#include "exeray/etw/event_ids.hpp"
 
 namespace exeray::etw::clr {
 
-/// CLR Runtime event IDs from Microsoft-Windows-DotNETRuntime provider.
-enum class ClrEventId : uint16_t {
-    AssemblyLoadStart = 152,   ///< Assembly load started
-    AssemblyLoadStop  = 153,   ///< Assembly load completed
-    AssemblyUnload    = 154,   ///< Assembly unloaded
-    MethodJitStart    = 155    ///< Method JIT compilation started
-};
+/// Alias for centralized CLR event IDs.
+namespace event_ids = exeray::etw::ids::clr;
 
 }  // namespace exeray::etw::clr
 

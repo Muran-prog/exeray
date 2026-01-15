@@ -3,15 +3,12 @@
 
 #pragma once
 
-#include <cstdint>
+#include "exeray/etw/event_ids.hpp"
 
 namespace exeray::etw::dns {
 
-/// DNS Client event IDs from Microsoft-Windows-DNS-Client provider.
-enum class EventId : uint16_t {
-    QueryCompleted = 3006,  ///< DNS query completed successfully
-    QueryFailed = 3008      ///< DNS query failed
-};
+/// Alias for centralized DNS event IDs.
+namespace event_ids = exeray::etw::ids::dns;
 
 /// DNS query types (IANA).
 namespace types {

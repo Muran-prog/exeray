@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -13,17 +14,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Network event IDs from Microsoft-Windows-Kernel-Network provider.
-/// Note: Actual event IDs may vary by Windows version.
-enum class NetworkEventId : uint16_t {
-    TcpConnect = 10,
-    TcpAccept = 11,
-    TcpSend = 14,
-    TcpReceive = 15,
-    UdpSend = 18,
-    UdpReceive = 19
-};
 
 /// Protocol numbers (IANA).
 constexpr uint8_t PROTO_TCP = 6;
@@ -150,19 +140,19 @@ ParsedEvent parse_network_event(const EVENT_RECORD* record, event::StringPool* s
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<NetworkEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case NetworkEventId::TcpConnect:
-        case NetworkEventId::TcpAccept:
+        case ids::network::TCP_CONNECT:
+        case ids::network::TCP_ACCEPT:
             return parse_tcp_connect(record);
-        case NetworkEventId::TcpSend:
+        case ids::network::TCP_SEND:
             return parse_tcp_transfer(record, event::NetworkOp::Send);
-        case NetworkEventId::TcpReceive:
+        case ids::network::TCP_RECEIVE:
             return parse_tcp_transfer(record, event::NetworkOp::Receive);
-        case NetworkEventId::UdpSend:
+        case ids::network::UDP_SEND:
             return parse_udp_event(record, event::NetworkOp::Send);
-        case NetworkEventId::UdpReceive:
+        case ids::network::UDP_RECEIVE:
             return parse_udp_event(record, event::NetworkOp::Receive);
         default:
             // Unknown event - try TDH fallback

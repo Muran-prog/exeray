@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -14,13 +15,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Process event IDs from Microsoft-Windows-Kernel-Process provider.
-enum class ProcessEventId : uint16_t {
-    ProcessStart = 1,
-    ProcessStop = 2,
-    ImageLoad = 5
-};
 
 /// @brief Parse ProcessStart event (Event ID 1).
 ///
@@ -217,14 +211,14 @@ ParsedEvent parse_process_event(const EVENT_RECORD* record, event::StringPool* s
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<ProcessEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case ProcessEventId::ProcessStart:
+        case ids::process::START:
             return parse_process_start(record, strings);
-        case ProcessEventId::ProcessStop:
+        case ids::process::STOP:
             return parse_process_stop(record, strings);
-        case ProcessEventId::ImageLoad:
+        case ids::process::IMAGE_LOAD:
             return parse_image_load(record, strings);
         default:
             // Unknown event ID - try TDH fallback

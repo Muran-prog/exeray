@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -18,12 +19,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Image event IDs from NT Kernel Logger Image class.
-enum class ImageEventId : uint16_t {
-    Unload = 2,   ///< Image unloaded from process
-    Load = 10     ///< Image loaded into process
-};
 
 /// @brief Check if a path is suspicious (temp/appdata directories).
 ///
@@ -223,12 +218,12 @@ ParsedEvent parse_image_event(const EVENT_RECORD* record, event::StringPool* str
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<ImageEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case ImageEventId::Load:
+        case ids::image::LOAD:
             return parse_image_load(record, strings);
-        case ImageEventId::Unload:
+        case ids::image::UNLOAD:
             return parse_image_unload(record, strings);
         default:
             // Unknown event ID - try TDH fallback

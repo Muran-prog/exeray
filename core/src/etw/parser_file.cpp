@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -14,15 +15,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// File event IDs from Microsoft-Windows-Kernel-File provider.
-enum class FileEventId : uint16_t {
-    Create = 10,
-    Cleanup = 11,
-    Read = 14,
-    Write = 15,
-    Delete = 26
-};
 
 /// @brief Initialize file payload with defaults.
 void init_file_payload(ParsedEvent& result) {
@@ -204,18 +196,18 @@ ParsedEvent parse_file_event(const EVENT_RECORD* record, event::StringPool* stri
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<FileEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case FileEventId::Create:
+        case ids::file::CREATE:
             return parse_file_create(record, strings);
-        case FileEventId::Cleanup:
+        case ids::file::CLEANUP:
             return parse_file_cleanup(record, strings);
-        case FileEventId::Read:
+        case ids::file::READ:
             return parse_file_read(record, strings);
-        case FileEventId::Write:
+        case ids::file::WRITE:
             return parse_file_write(record, strings);
-        case FileEventId::Delete:
+        case ids::file::DELETE:
             return parse_file_delete(record, strings);
         default:
             // Unknown event - try TDH fallback

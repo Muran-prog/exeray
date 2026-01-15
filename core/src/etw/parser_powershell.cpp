@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -23,12 +24,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// PowerShell event IDs from Microsoft-Windows-PowerShell provider.
-enum class PowerShellEventId : uint16_t {
-    ModuleLogging = 4103,      ///< Module/Cmdlet logging
-    ScriptBlockLogging = 4104  ///< Script Block Logging (critical!)
-};
 
 /// @brief Suspicious PowerShell patterns for fileless malware detection.
 ///
@@ -257,13 +252,12 @@ ParsedEvent parse_powershell_event(const EVENT_RECORD* record, event::StringPool
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<PowerShellEventId>(
-        record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case PowerShellEventId::ScriptBlockLogging:
+        case ids::powershell::SCRIPT_BLOCK_LOGGING:
             return parse_script_block_event(record, strings);
-        case PowerShellEventId::ModuleLogging:
+        case ids::powershell::MODULE_LOGGING:
             return parse_module_event(record, strings);
         default:
             // Unknown event ID - try TDH fallback

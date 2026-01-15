@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -14,12 +15,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Virtual memory event IDs from PageFault_VirtualAlloc class.
-enum class MemoryEventId : uint16_t {
-    VirtualAlloc = 98,  ///< VirtualAlloc/VirtualAllocEx
-    VirtualFree = 99    ///< VirtualFree
-};
 
 // Memory protection constants (values from WinNT.h)
 // These indicate executable + writable memory - suspicious for shellcode
@@ -200,12 +195,12 @@ ParsedEvent parse_memory_event(const EVENT_RECORD* record, event::StringPool* st
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<MemoryEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case MemoryEventId::VirtualAlloc:
+        case ids::memory::VIRTUAL_ALLOC:
             return parse_virtual_alloc(record);
-        case MemoryEventId::VirtualFree:
+        case ids::memory::VIRTUAL_FREE:
             return parse_virtual_free(record);
         default:
             // Unknown event ID - try TDH fallback

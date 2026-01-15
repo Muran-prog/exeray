@@ -6,6 +6,7 @@
 #include "constants.hpp"
 #include "query_parser.hpp"
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/tdh_parser.hpp"
 #include "exeray/event/string_pool.hpp"
@@ -17,13 +18,12 @@ ParsedEvent parse_dns_event(const EVENT_RECORD* record, event::StringPool* strin
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<dns::EventId>(
-        record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case dns::EventId::QueryCompleted:
+        case ids::dns::QUERY_COMPLETED:
             return dns::parse_query_completed(record, strings);
-        case dns::EventId::QueryFailed:
+        case ids::dns::QUERY_FAILED:
             return dns::parse_query_failed(record, strings);
         default:
             // Unknown event ID - try TDH fallback

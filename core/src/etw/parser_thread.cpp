@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 
+#include "exeray/etw/event_ids.hpp"
 #include "exeray/etw/parser.hpp"
 #include "exeray/etw/parser_utils.hpp"
 #include "exeray/etw/session.hpp"
@@ -13,14 +14,6 @@
 namespace exeray::etw {
 
 namespace {
-
-/// Thread event IDs from Thread_TypeGroup1 class.
-enum class ThreadEventId : uint16_t {
-    Start = 1,    ///< Thread started
-    End = 2,      ///< Thread terminated
-    DCStart = 3,  ///< Running thread enumeration at session start
-    DCEnd = 4     ///< Running thread enumeration at session end
-};
 
 /// @brief Check if this is a remote thread injection.
 ///
@@ -175,16 +168,16 @@ ParsedEvent parse_thread_event(const EVENT_RECORD* record, event::StringPool* st
         return ParsedEvent{.valid = false};
     }
 
-    const auto event_id = static_cast<ThreadEventId>(record->EventHeader.EventDescriptor.Id);
+    const auto event_id = record->EventHeader.EventDescriptor.Id;
 
     switch (event_id) {
-        case ThreadEventId::Start:
+        case ids::thread::START:
             return parse_thread_start(record);
-        case ThreadEventId::End:
+        case ids::thread::END:
             return parse_thread_end(record);
-        case ThreadEventId::DCStart:
+        case ids::thread::DC_START:
             return parse_thread_dcstart(record);
-        case ThreadEventId::DCEnd:
+        case ids::thread::DC_END:
             return parse_thread_dcend(record);
         default:
             // Unknown event ID - try TDH fallback
