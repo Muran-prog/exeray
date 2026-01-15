@@ -5,6 +5,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <cstdint>
 #else
 // GUID struct is defined in session.hpp for non-Windows platforms
 #include <cstdint>

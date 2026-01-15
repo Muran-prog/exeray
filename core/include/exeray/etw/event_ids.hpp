@@ -23,7 +23,7 @@ namespace file {
     constexpr uint16_t CLEANUP = 11;  ///< File cleanup (close)
     constexpr uint16_t READ = 14;     ///< File read
     constexpr uint16_t WRITE = 15;    ///< File write
-    constexpr uint16_t DELETE = 26;   ///< File delete
+    constexpr uint16_t DELETE_FILE = 26;   ///< File delete
 }  // namespace file
 
 /// Event IDs from NT Kernel Logger Image class.
@@ -89,7 +89,7 @@ namespace security {
     constexpr uint16_t LOGON_FAILED = 4625;        ///< Failed logon attempt
     constexpr uint16_t PROCESS_CREATE = 4688;      ///< New process created
     constexpr uint16_t PROCESS_TERMINATE = 4689;   ///< Process terminated
-    constexpr uint16_t SERVICE_INSTALL = 4697;     ///< Service installed
+    constexpr uint16_t SERVICE_INSTALLED = 4697;  ///< Service installed
     constexpr uint16_t TOKEN_RIGHTS = 4703;        ///< Token rights adjusted
 }  // namespace security
 
