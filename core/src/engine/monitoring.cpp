@@ -5,34 +5,9 @@
 #include "exeray/etw/session.hpp"
 #include "exeray/logging.hpp"
 #include "exeray/process/controller.hpp"
-
-#include <optional>
+#include "provider_mapping.hpp"
 
 namespace exeray {
-
-namespace {
-
-#ifdef _WIN32
-/// @brief Map provider name to GUID (Windows implementation).
-std::optional<GUID> get_provider_guid(std::string_view name) {
-    if (name == "Process") return etw::providers::KERNEL_PROCESS;
-    if (name == "File") return etw::providers::KERNEL_FILE;
-    if (name == "Registry") return etw::providers::KERNEL_REGISTRY;
-    if (name == "Network") return etw::providers::KERNEL_NETWORK;
-    if (name == "Image") return etw::providers::KERNEL_IMAGE;
-    if (name == "Thread") return etw::providers::KERNEL_THREAD;
-    if (name == "Memory") return etw::providers::KERNEL_MEMORY;
-    if (name == "PowerShell") return etw::providers::POWERSHELL;
-    if (name == "AMSI") return etw::providers::AMSI;
-    if (name == "DNS") return etw::providers::DNS_CLIENT;
-    if (name == "WMI") return etw::providers::WMI_ACTIVITY;
-    if (name == "CLR") return etw::providers::CLR_RUNTIME;
-    if (name == "Security") return etw::providers::SECURITY_AUDITING;
-    return std::nullopt;
-}
-#endif
-
-}  // namespace
 
 bool Engine::start_monitoring(std::wstring_view exe_path) {
     // Don't start if already monitoring
@@ -74,7 +49,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
                 continue;
             }
 
-            auto guid = get_provider_guid(name);
+            auto guid = internal::get_provider_guid(name);
             if (!guid) {
                 EXERAY_WARN("Unknown provider: {}", name);
                 continue;

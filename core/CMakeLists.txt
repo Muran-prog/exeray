@@ -17,6 +17,14 @@ FetchContent_MakeAvailable(spdlog)
 add_library(exeray_core STATIC
     src/stub.cpp
     src/engine.cpp
+    src/engine/provider_mapping.cpp
+    src/engine/constructor.cpp
+    src/engine/monitoring.cpp
+    src/engine/control.cpp
+    src/engine/legacy_api.cpp
+    src/engine/etw_thread.cpp
+    src/engine/correlation.cpp
+    src/engine/provider_config.cpp
     src/event/string_pool.cpp
     src/event/graph.cpp
     src/event/correlator.cpp

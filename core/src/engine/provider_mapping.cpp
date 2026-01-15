@@ -1,19 +1,13 @@
 /// @file engine/provider_mapping.cpp
 /// @brief Provider name to GUID mapping utility.
 
-#include "exeray/engine.hpp"
-#include "exeray/etw/session.hpp"
-
-#include <optional>
-
-namespace exeray {
-
-namespace {
+#include "provider_mapping.hpp"
 
 #ifdef _WIN32
-/// @brief Map provider name to GUID (Windows implementation).
-/// @param name Provider name (e.g., "Process", "File").
-/// @return GUID if known, nullopt otherwise.
+#include "exeray/etw/session.hpp"
+
+namespace exeray::internal {
+
 std::optional<GUID> get_provider_guid(std::string_view name) {
     // Static registry of provider name → GUID mappings
     if (name == "Process") return etw::providers::KERNEL_PROCESS;
@@ -31,13 +25,6 @@ std::optional<GUID> get_provider_guid(std::string_view name) {
     if (name == "Security") return etw::providers::SECURITY_AUDITING;
     return std::nullopt;
 }
-#else
-/// @brief Stub for non-Windows platforms.
-std::optional<etw::GUID> get_provider_guid([[maybe_unused]] std::string_view name) {
-    return std::nullopt;  // ETW not available on non-Windows
-}
+
+}  // namespace exeray::internal
 #endif
-
-}  // namespace
-
-}  // namespace exeray
