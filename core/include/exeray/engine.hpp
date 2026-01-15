@@ -38,29 +38,25 @@ struct ProviderConfig {
 
 /// @brief Engine configuration parameters.
 struct EngineConfig {
-    std::size_t arena_size;   ///< Size of the memory arena in bytes.
-    std::size_t num_threads;  ///< Number of worker threads.
-    int log_level = 2;        ///< Log level: 0=trace, 1=debug, 2=info, 3=warn, 4=error.
-    std::string log_file;     ///< Optional log file path (empty = stderr only).
+    std::size_t arena_size = 0;   ///< Size of the memory arena in bytes.
+    std::size_t num_threads = 0;  ///< Number of worker threads.
+    int log_level = 2;            ///< Log level: 0=trace, 1=debug, 2=info, 3=warn, 4=error.
+    std::string log_file;         ///< Optional log file path (empty = stderr only).
 
     /// @brief Provider configurations (name → config).
+    std::unordered_map<std::string, ProviderConfig> providers;
+
+    /// @brief Create configuration with default provider settings.
     ///
-    /// Default configuration enables core providers, disables optional ones.
-    std::unordered_map<std::string, ProviderConfig> providers = {
-        {"Process", {true, 4, 0}},
-        {"File", {true, 4, 0}},
-        {"Registry", {true, 4, 0}},
-        {"Network", {true, 4, 0}},
-        {"Image", {true, 4, 0}},
-        {"Thread", {true, 4, 0}},
-        {"Memory", {true, 5, 0}},      // VERBOSE for detailed info
-        {"PowerShell", {true, 5, 0}},
-        {"AMSI", {true, 4, 0}},
-        {"DNS", {false, 4, 0}},        // Disabled by default
-        {"WMI", {false, 4, 0}},
-        {"CLR", {false, 4, 0}},
-        {"Security", {false, 4, 0}},
-    };
+    /// Default enables core providers (Process, File, Registry, Network, Image,
+    /// Thread, Memory, PowerShell, AMSI) and disables optional ones (DNS, WMI,
+    /// CLR, Security).
+    ///
+    /// @param arena_size Size of the memory arena in bytes.
+    /// @param num_threads Number of worker threads.
+    /// @return Configured EngineConfig with default providers.
+    [[nodiscard]] static EngineConfig with_defaults(std::size_t arena_size,
+                                                     std::size_t num_threads);
 };
 
 /// @brief Core engine integrating ETW tracing and process control.
