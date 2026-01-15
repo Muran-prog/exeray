@@ -2,10 +2,10 @@
 /// @brief Process monitoring implementation: start, stop, status.
 
 #include "exeray/engine.hpp"
+#include "exeray/etw/provider_mapping.hpp"
 #include "exeray/etw/session.hpp"
 #include "exeray/logging.hpp"
 #include "exeray/process/controller.hpp"
-#include "provider_mapping.hpp"
 
 namespace exeray {
 
@@ -49,7 +49,7 @@ bool Engine::start_monitoring(std::wstring_view exe_path) {
                 continue;
             }
 
-            auto guid = internal::get_provider_guid(name);
+            auto guid = etw::get_provider_guid(name);
             if (!guid) {
                 EXERAY_WARN("Unknown provider: {}", name);
                 continue;
