@@ -31,7 +31,10 @@ add_library(exeray_core STATIC
     src/etw/parser_memory.cpp
     src/etw/parser_powershell.cpp
     src/etw/parser_amsi.cpp
-    src/etw/parser_dns.cpp
+    src/etw/parsers/dns/dga_detector.cpp
+    src/etw/parsers/dns/helpers.cpp
+    src/etw/parsers/dns/query_parser.cpp
+    src/etw/parsers/dns/dispatcher.cpp
     src/etw/parsers/security/brute_force_tracker.cpp
     src/etw/parsers/security/helpers.cpp
     src/etw/parsers/security/logon.cpp
