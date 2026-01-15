@@ -5,6 +5,51 @@ use crate::event::Event;
 use crate::event_iter::EventIter;
 use crate::ffi::{self, Category, Status};
 
+/// Convert a raw u8 to Category using exhaustive match.
+///
+/// This ensures compile-time safety: if the CXX enum definition changes,
+/// this function will fail to compile until updated.
+fn category_from_u8(val: u8) -> Category {
+    match val {
+        0 => Category::FileSystem,
+        1 => Category::Registry,
+        2 => Category::Network,
+        3 => Category::Process,
+        4 => Category::Scheduler,
+        5 => Category::Input,
+        6 => Category::Image,
+        7 => Category::Thread,
+        8 => Category::Memory,
+        9 => Category::Script,
+        10 => Category::Amsi,
+        11 => Category::Dns,
+        12 => Category::Security,
+        13 => Category::Service,
+        14 => Category::Wmi,
+        15 => Category::Clr,
+        // Unknown values default to FileSystem to avoid panics.
+        // C++ side guarantees valid values; this is a safety fallback.
+        _ => Category::FileSystem,
+    }
+}
+
+/// Convert a raw u8 to Status using exhaustive match.
+///
+/// This ensures compile-time safety: if the CXX enum definition changes,
+/// this function will fail to compile until updated.
+fn status_from_u8(val: u8) -> Status {
+    match val {
+        0 => Status::Success,
+        1 => Status::Denied,
+        2 => Status::Pending,
+        3 => Status::Error,
+        4 => Status::Suspicious,
+        // Unknown values default to Error to avoid panics.
+        // C++ side guarantees valid values; this is a safety fallback.
+        _ => Status::Error,
+    }
+}
+
 impl Engine {
     /// Get the current event count.
     pub fn event_count(&self) -> usize {
@@ -19,18 +64,12 @@ impl Engine {
             return None;
         }
 
-        // cxx shared enums are repr(transparent) structs with a repr field.
-        // Direct construction avoids manual match statements and is type-safe.
         Some(Event {
             id: ffi::event_get_id(&self.0, index),
             parent_id: ffi::event_get_parent(&self.0, index),
             timestamp: ffi::event_get_timestamp(&self.0, index),
-            category: Category {
-                repr: ffi::event_get_category(&self.0, index),
-            },
-            status: Status {
-                repr: ffi::event_get_status(&self.0, index),
-            },
+            category: category_from_u8(ffi::event_get_category(&self.0, index)),
+            status: status_from_u8(ffi::event_get_status(&self.0, index)),
             operation: ffi::event_get_operation(&self.0, index),
         })
     }
