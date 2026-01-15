@@ -5,14 +5,21 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Option to use system-installed spdlog
+option(EXERAY_USE_SYSTEM_SPDLOG "Use system-installed spdlog instead of FetchContent" OFF)
+
 # spdlog for structured logging
-include(FetchContent)
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.13.0
-)
-FetchContent_MakeAvailable(spdlog)
+if(EXERAY_USE_SYSTEM_SPDLOG)
+    find_package(spdlog REQUIRED)
+else()
+    include(FetchContent)
+    FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.13.0
+    )
+    FetchContent_MakeAvailable(spdlog)
+endif()
 
 add_library(exeray_core STATIC
     src/stub.cpp
