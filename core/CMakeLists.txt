@@ -36,7 +36,24 @@ add_library(exeray_core STATIC
     src/etw/parser_wmi.cpp
     src/etw/parser_clr.cpp
     src/etw/parser_dispatch.cpp
-    src/etw/tdh_parser.cpp
+    src/etw/tdh/property_helpers.cpp
+    src/etw/tdh/property_extractor.cpp
+    src/etw/tdh/value_getters.cpp
+    src/etw/tdh/schema_cache.cpp
+    src/etw/tdh/parser.cpp
+    src/etw/tdh/converters/process.cpp
+    src/etw/tdh/converters/file.cpp
+    src/etw/tdh/converters/registry.cpp
+    src/etw/tdh/converters/network.cpp
+    src/etw/tdh/converters/image.cpp
+    src/etw/tdh/converters/thread.cpp
+    src/etw/tdh/converters/memory.cpp
+    src/etw/tdh/converters/script.cpp
+    src/etw/tdh/converters/amsi.cpp
+    src/etw/tdh/converters/dns.cpp
+    src/etw/tdh/converters/security.cpp
+    src/etw/tdh/converters/wmi.cpp
+    src/etw/tdh/converters/clr.cpp
     src/process/controller.cpp
 
     src/logging.cpp
