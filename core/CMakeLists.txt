@@ -152,7 +152,16 @@ if(BUILD_TESTING)
     )
     gtest_discover_tests(graph_test)
 
-    add_executable(arena_test tests/unit/arena_test.cpp)
+    add_executable(arena_test
+        tests/unit/arena/arena_basic_test.cpp
+        tests/unit/arena/arena_alignment_test.cpp
+        tests/unit/arena/arena_capacity_test.cpp
+        tests/unit/arena/arena_overflow_test.cpp
+        tests/unit/arena/arena_concurrent_test.cpp
+        tests/unit/arena/arena_reset_test.cpp
+        tests/unit/arena/arena_edge_cases_test.cpp
+        tests/unit/arena/arena_memory_test.cpp
+    )
     target_link_libraries(arena_test PRIVATE exeray_core GTest::gtest_main)
     target_compile_options(arena_test PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
