@@ -169,7 +169,17 @@ if(BUILD_TESTING)
     )
     gtest_discover_tests(arena_test)
 
-    add_executable(string_pool_unit_test tests/unit/string_pool_test.cpp)
+    add_executable(string_pool_unit_test
+        tests/unit/string_pool/string_pool_basic_test.cpp
+        tests/unit/string_pool/string_pool_special_strings_test.cpp
+        tests/unit/string_pool/string_pool_unicode_test.cpp
+        tests/unit/string_pool/string_pool_wide_test.cpp
+        tests/unit/string_pool/string_pool_get_test.cpp
+        tests/unit/string_pool/string_pool_dedup_test.cpp
+        tests/unit/string_pool/string_pool_concurrent_test.cpp
+        tests/unit/string_pool/string_pool_metrics_test.cpp
+        tests/unit/string_pool/string_pool_exhaustion_test.cpp
+    )
     target_link_libraries(string_pool_unit_test PRIVATE exeray_core GTest::gtest_main)
     target_compile_options(string_pool_unit_test PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
