@@ -32,7 +32,7 @@ public:
     template<typename T>
     T* allocate(std::size_t count = 1) {
         // Overflow check: ensure sizeof(T) * count won't overflow
-        if (count > std::numeric_limits<std::size_t>::max() / sizeof(T)) {
+        if (count > (std::numeric_limits<std::size_t>::max)() / sizeof(T)) {
             return nullptr;
         }
 

@@ -207,7 +207,7 @@ ParsedEvent parse_file_event(const EVENT_RECORD* record, event::StringPool* stri
             return parse_file_read(record, strings);
         case ids::file::WRITE:
             return parse_file_write(record, strings);
-        case ids::file::DELETE_FILE:
+        case ids::file::FILE_DELETE:
             return parse_file_delete(record, strings);
         default:
             // Unknown event - try TDH fallback

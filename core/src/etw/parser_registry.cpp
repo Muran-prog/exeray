@@ -140,7 +140,7 @@ ParsedEvent parse_registry_event(const EVENT_RECORD* record, event::StringPool* 
             return parse_key_event(record, event::RegistryOp::QueryValue, strings);
         case ids::registry::SET_VALUE:
             return parse_value_event(record, event::RegistryOp::SetValue, strings);
-        case ids::registry::DELETE_VALUE:
+        case ids::registry::VALUE_DELETE:
             return parse_value_event(record, event::RegistryOp::DeleteValue, strings);
         default:
             // Unknown event - try TDH fallback

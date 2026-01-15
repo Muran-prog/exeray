@@ -23,7 +23,7 @@ namespace file {
     constexpr uint16_t CLEANUP = 11;  ///< File cleanup (close)
     constexpr uint16_t READ = 14;     ///< File read
     constexpr uint16_t WRITE = 15;    ///< File write
-    constexpr uint16_t DELETE_FILE = 26;   ///< File delete
+    constexpr uint16_t FILE_DELETE = 26;   ///< File delete
 }  // namespace file
 
 /// Event IDs from NT Kernel Logger Image class.
@@ -37,7 +37,7 @@ namespace registry {
     constexpr uint16_t CREATE_KEY = 1;    ///< CreateKey
     constexpr uint16_t OPEN_KEY = 2;      ///< OpenKey
     constexpr uint16_t SET_VALUE = 5;     ///< SetValue
-    constexpr uint16_t DELETE_VALUE = 6;  ///< DeleteValue
+    constexpr uint16_t VALUE_DELETE = 6;  ///< DeleteValue
 }  // namespace registry
 
 /// Event IDs from Microsoft-Windows-Kernel-Network provider.
