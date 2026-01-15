@@ -21,6 +21,16 @@ mod ffi {
         Process = 3,
         Scheduler = 4,
         Input = 5,
+        Image = 6,
+        Thread = 7,
+        Memory = 8,
+        Script = 9,
+        Amsi = 10,
+        Dns = 11,
+        Security = 12,
+        Service = 13,
+        Wmi = 14,
+        Clr = 15,
     }
 
     /// Operation result status.
@@ -30,6 +40,7 @@ mod ffi {
         Denied = 1,
         Pending = 2,
         Error = 3,
+        Suspicious = 4,
     }
 
     unsafe extern "C++" {
