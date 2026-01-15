@@ -167,5 +167,13 @@ if(BUILD_TESTING)
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
     )
     gtest_discover_tests(string_pool_unit_test)
+
+    add_executable(event_graph_test tests/unit/event_graph_test.cpp)
+    target_link_libraries(event_graph_test PRIVATE exeray_core GTest::gtest_main)
+    target_compile_options(event_graph_test PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+    )
+    gtest_discover_tests(event_graph_test)
 endif()
 
