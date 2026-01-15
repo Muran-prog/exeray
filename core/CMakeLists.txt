@@ -175,5 +175,13 @@ if(BUILD_TESTING)
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
     )
     gtest_discover_tests(event_graph_test)
+
+    add_executable(correlator_test tests/unit/correlator_test.cpp)
+    target_link_libraries(correlator_test PRIVATE exeray_core GTest::gtest_main)
+    target_compile_options(correlator_test PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+    )
+    gtest_discover_tests(correlator_test)
 endif()
 
