@@ -32,7 +32,13 @@ add_library(exeray_core STATIC
     src/etw/parser_powershell.cpp
     src/etw/parser_amsi.cpp
     src/etw/parser_dns.cpp
-    src/etw/parser_security.cpp
+    src/etw/parsers/security/brute_force_tracker.cpp
+    src/etw/parsers/security/helpers.cpp
+    src/etw/parsers/security/logon.cpp
+    src/etw/parsers/security/process_audit.cpp
+    src/etw/parsers/security/service.cpp
+    src/etw/parsers/security/token.cpp
+    src/etw/parsers/security/dispatcher.cpp
     src/etw/parser_wmi.cpp
     src/etw/parser_clr.cpp
     src/etw/parser_dispatch.cpp
