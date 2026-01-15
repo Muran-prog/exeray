@@ -111,25 +111,6 @@ void log_suspicious_script(uint32_t pid, std::string_view matched_pattern) {
                 pid, matched_pattern);
 }
 
-/// @brief Extract wide string from event data.
-/// @param data Pointer to start of string.
-/// @param max_len Maximum bytes to read.
-/// @return String view (empty if null or invalid).
-std::wstring_view extract_wstring(const uint8_t* data, size_t max_len) {
-    if (data == nullptr || max_len < 2) {
-        return {};
-    }
-
-    // Find null terminator
-    const auto* wdata = reinterpret_cast<const wchar_t*>(data);
-    size_t max_chars = max_len / sizeof(wchar_t);
-    size_t len = 0;
-    while (len < max_chars && wdata[len] != L'\0') {
-        ++len;
-    }
-    return {wdata, len};
-}
-
 /// @brief Convert wide string to narrow string for pattern matching.
 std::string wstring_to_string(std::wstring_view wstr) {
     std::string result;

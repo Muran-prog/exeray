@@ -4,9 +4,7 @@
 
 #include <optional>
 #include <string_view>
-
-#ifdef _WIN32
-#include <windows.h>
+#include "exeray/platform/guid.hpp"
 
 namespace exeray::etw {
 
@@ -16,4 +14,3 @@ namespace exeray::etw {
 std::optional<GUID> get_provider_guid(std::string_view name);
 
 }  // namespace exeray::etw
-#endif

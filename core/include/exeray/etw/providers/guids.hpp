@@ -3,15 +3,8 @@
 /// @file guids.hpp
 /// @brief Well-known ETW provider GUID declarations.
 
-#ifdef _WIN32
-#include <windows.h>
 #include <cstdint>
-#else
-// GUID struct is defined in session.hpp for non-Windows platforms
-#include <cstdint>
-// Forward declare types for the providers namespace
-namespace exeray::etw { struct GUID; }
-#endif
+#include "exeray/platform/guid.hpp"
 
 namespace exeray::etw::providers {
 

@@ -17,6 +17,7 @@
 #include <windows.h>
 #include <evntrace.h>
 #include <evntcons.h>
+#include "exeray/platform/guid.hpp"
 
 namespace exeray::etw {
 
@@ -110,16 +111,9 @@ private:
 #include <memory>
 #include <string>
 #include <string_view>
+#include "exeray/platform/guid.hpp"
 
 namespace exeray::etw {
-
-// Forward declare a placeholder GUID type for non-Windows
-struct GUID {
-    uint32_t Data1;
-    uint16_t Data2;
-    uint16_t Data3;
-    uint8_t Data4[8];
-};
 
 using TRACEHANDLE = uint64_t;
 constexpr TRACEHANDLE INVALID_PROCESSTRACE_HANDLE = static_cast<TRACEHANDLE>(-1);

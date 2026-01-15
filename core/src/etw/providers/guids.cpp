@@ -1,12 +1,7 @@
 /// @file guids.cpp
 /// @brief Well-known ETW provider GUID definitions.
 
-#ifdef _WIN32
 #include "exeray/etw/providers/guids.hpp"
-#else
-// For non-Windows, include session.hpp to get GUID struct definition
-#include "exeray/etw/session.hpp"
-#endif
 
 namespace exeray::etw::providers {
 

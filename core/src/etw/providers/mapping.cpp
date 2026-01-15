@@ -2,8 +2,6 @@
 /// @brief Provider name to GUID mapping implementation.
 
 #include "exeray/etw/provider_mapping.hpp"
-
-#ifdef _WIN32
 #include "exeray/etw/providers/guids.hpp"
 
 namespace exeray::etw {
@@ -27,4 +25,3 @@ std::optional<GUID> get_provider_guid(std::string_view name) {
 }
 
 }  // namespace exeray::etw
-#endif
