@@ -177,7 +177,18 @@ if(BUILD_TESTING)
     )
     gtest_discover_tests(string_pool_unit_test)
 
-    add_executable(event_graph_test tests/unit/event_graph_test.cpp)
+    add_executable(event_graph_test
+        tests/unit/event_graph/event_graph_basic_test.cpp
+        tests/unit/event_graph/event_graph_capacity_test.cpp
+        tests/unit/event_graph/event_graph_parent_child_test.cpp
+        tests/unit/event_graph/event_graph_correlation_test.cpp
+        tests/unit/event_graph/event_graph_category_test.cpp
+        tests/unit/event_graph/event_graph_iteration_test.cpp
+        tests/unit/event_graph/event_graph_concurrent_test.cpp
+        tests/unit/event_graph/event_graph_index_test.cpp
+        tests/unit/event_graph/event_graph_string_test.cpp
+        tests/unit/event_graph/event_graph_edge_cases_test.cpp
+    )
     target_link_libraries(event_graph_test PRIVATE exeray_core GTest::gtest_main)
     target_compile_options(event_graph_test PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
