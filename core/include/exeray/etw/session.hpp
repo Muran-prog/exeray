@@ -98,88 +98,10 @@ private:
     std::wstring session_name_;
 };
 
-/// @brief Well-known Windows kernel provider GUIDs.
-namespace providers {
-
-/// Microsoft-Windows-Kernel-Process provider
-/// Traces process creation, termination, thread events.
-extern const GUID KERNEL_PROCESS;
-
-/// Microsoft-Windows-Kernel-File provider
-/// Traces file system operations (create, read, write, delete).
-extern const GUID KERNEL_FILE;
-
-/// Microsoft-Windows-Kernel-Registry provider
-/// Traces registry operations (open, query, set, delete keys/values).
-extern const GUID KERNEL_REGISTRY;
-
-/// Microsoft-Windows-Kernel-Network provider
-/// Traces network operations (TCP/UDP connect, send, receive).
-extern const GUID KERNEL_NETWORK;
-
-/// Image Load provider (classic NT Kernel Logger)
-/// GUID: {2CB15D1D-5FC1-11D2-ABE1-00A0C911F518}
-/// Traces DLL/EXE image load and unload events.
-extern const GUID KERNEL_IMAGE;
-
-/// Thread events provider (classic NT Kernel Logger)
-/// GUID: {3D6FA8D1-FE05-11D0-9DDA-00C04FD7BA7C}
-/// Traces thread start/end events for remote injection detection.
-extern const GUID KERNEL_THREAD;
-
-/// Virtual memory events provider (PageFault)
-/// GUID: {3D6FA8D3-FE05-11D0-9DDA-00C04FD7BA7C}
-/// Traces VirtualAlloc/VirtualFree for RWX shellcode detection.
-extern const GUID KERNEL_MEMORY;
-
-/// Microsoft-Windows-PowerShell provider
-/// GUID: {A0C1853B-5C40-4B15-8766-3CF1C58F985A}
-/// Traces PowerShell script execution for fileless malware detection.
-extern const GUID POWERSHELL;
-
-/// Microsoft-Antimalware-Scan-Interface provider
-/// GUID: {2A576B87-09A7-520E-C21A-4942F0271D67}
-/// Traces AMSI scan requests for bypass detection.
-extern const GUID AMSI;
-
-/// Microsoft-Windows-DNS-Client provider
-/// GUID: {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}
-/// Traces DNS query operations for C2/DGA detection.
-extern const GUID DNS_CLIENT;
-
-/// Microsoft-Windows-Security-Auditing provider
-/// GUID: {54849625-5478-4994-A5BA-3E3B0328C30D}
-/// Traces security events: logon, privilege changes, service installation.
-extern const GUID SECURITY_AUDITING;
-
-/// Microsoft-Windows-WMI-Activity provider
-/// GUID: {1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}
-/// Traces WMI queries and method executions for attack detection.
-extern const GUID WMI_ACTIVITY;
-
-/// Microsoft-Windows-DotNETRuntime provider
-/// GUID: {E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4}
-/// Traces .NET assembly loading and JIT compilation for malware detection.
-extern const GUID CLR_RUNTIME;
-
-/// PowerShell keywords for event filtering.
-namespace powershell_keywords {
-    constexpr uint64_t RUNSPACE = 0x10;   ///< Runspace lifecycle
-    constexpr uint64_t PIPELINE = 0x20;   ///< Pipeline execution
-    constexpr uint64_t CMDLETS  = 0x40;   ///< Cmdlet invocation
-    constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
-}  // namespace powershell_keywords
-
-/// CLR Runtime keywords for event filtering.
-namespace clr_keywords {
-    constexpr uint64_t LOADER = 0x8;   ///< Assembly/Module load events
-    constexpr uint64_t JIT    = 0x10;  ///< JIT compilation events
-    constexpr uint64_t ALL    = LOADER | JIT;
-}  // namespace clr_keywords
-
-}  // namespace providers
-
 }  // namespace exeray::etw
+
+// Include provider GUIDs - separated for modularity
+#include "exeray/etw/providers/guids.hpp"
 
 #else  // !_WIN32
 
@@ -241,33 +163,9 @@ private:
     std::wstring session_name_;
 };
 
-namespace providers {
-extern const GUID KERNEL_PROCESS;
-extern const GUID KERNEL_FILE;
-extern const GUID KERNEL_REGISTRY;
-extern const GUID KERNEL_NETWORK;
-extern const GUID KERNEL_IMAGE;
-extern const GUID KERNEL_THREAD;
-extern const GUID KERNEL_MEMORY;
-extern const GUID POWERSHELL;
-extern const GUID AMSI;
-extern const GUID DNS_CLIENT;
-extern const GUID SECURITY_AUDITING;
-extern const GUID WMI_ACTIVITY;
-extern const GUID CLR_RUNTIME;
-namespace powershell_keywords {
-    constexpr uint64_t RUNSPACE = 0x10;
-    constexpr uint64_t PIPELINE = 0x20;
-    constexpr uint64_t CMDLETS  = 0x40;
-    constexpr uint64_t ALL      = RUNSPACE | PIPELINE | CMDLETS;
-}
-namespace clr_keywords {
-    constexpr uint64_t LOADER = 0x8;
-    constexpr uint64_t JIT    = 0x10;
-    constexpr uint64_t ALL    = LOADER | JIT;
-}
-}  // namespace providers
-
 }  // namespace exeray::etw
+
+// Include provider GUIDs - separated for modularity
+#include "exeray/etw/providers/guids.hpp"
 
 #endif  // _WIN32

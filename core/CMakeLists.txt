@@ -20,7 +20,11 @@ add_library(exeray_core STATIC
     src/event/string_pool.cpp
     src/event/graph.cpp
     src/event/correlator.cpp
-    src/etw/session.cpp
+    src/etw/providers/guids.cpp
+    src/etw/session/helpers.cpp
+    src/etw/session/factory.cpp
+    src/etw/session/session.cpp
+    src/etw/session/provider_ctrl.cpp
     src/etw/consumer.cpp
     src/etw/parser_process.cpp
     src/etw/parser_file.cpp
