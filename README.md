@@ -1,242 +1,126 @@
-# ExeRay
+<p align="center">
+  <h1 align="center">ExeRay</h1>
+  <p align="center">Real-time Windows process behavior monitoring via ETW</p>
+</p>
 
-[![CI](https://github.com/Muran-prog/ExeRay/actions/workflows/ci.yml/badge.svg)](https://github.com/Muran-prog/ExeRay/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.85+-orange.svg)](https://www.rust-lang.org/)
-[![C++](https://img.shields.io/badge/C++-20-blue.svg)](https://isocpp.org/)
-[![Status](https://img.shields.io/badge/Status-In_Development-yellow.svg)]()
-
-High-performance console application with Rust UI and C++ computational backend. Zero-copy FFI, lock-free concurrency, minimal memory footprint.
-
----
-
-## Table of Contents
-
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Requirements](#requirements)
-- [Building](#building)
-- [Usage](#usage)
-- [FFI Design](#ffi-design)
-- [Performance](#performance)
-- [License](#license)
+<p align="center">
+  <a href="https://github.com/Muran-prog/ExeRay/actions/workflows/ci.yml"><img src="https://github.com/Muran-prog/ExeRay/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="https://isocpp.org/"><img src="https://img.shields.io/badge/C++-20-blue.svg" alt="C++20"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-1.85+-orange.svg" alt="Rust"></a>
+</p>
 
 ---
+
+## What is ExeRay?
+
+ExeRay captures and analyzes Windows system activity in real-time using Event Tracing for Windows (ETW). It monitors process behavior, detects suspicious patterns, and provides security-focused telemetry.
+
+## Monitored Events
+
+| Category | Events |
+|----------|--------|
+| **Process** | Create, Terminate, Image Load/Unload |
+| **File System** | Create, Read, Write, Delete |
+| **Registry** | Key Create/Open, Value Set/Delete |
+| **Network** | TCP Connect/Accept/Send/Receive, UDP Send/Receive |
+| **Memory** | VirtualAlloc, VirtualFree (RWX detection) |
+| **Thread** | Start, End, Remote Injection Detection |
+| **Script** | PowerShell Script Block Logging, Suspicious Pattern Detection |
+| **AMSI** | Scan Results, Bypass Attempt Detection |
 
 ## Architecture
 
+```mermaid
+graph TB
+    subgraph ExeRay["ExeRay Binary"]
+        subgraph Rust["Rust (Ratatui TUI)"]
+            UI[Terminal Interface]
+            VIS[Event Visualization]
+            RT[Real-time Updates]
+        end
+        subgraph CPP["C++ Core"]
+            ETW[ETW Session & Parsing]
+            EG[Event Graph & Correlation]
+            ARENA[Arena Allocator]
+        end
+        FFI[cxx Bridge - FFI]
+    end
+    
+    WIN[Windows ETW API]
+    
+    Rust <--> FFI
+    CPP <--> FFI
+    FFI --> WIN
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Single Binary                          │
-├─────────────────────────────────────────────────────────────┤
-│  Rust (Ratatui)              │  C++ Core                    │
-│  ─────────────────           │  ──────────                  │
-│  Terminal UI                 │  Arena Allocator             │
-│  Event Loop                  │  Thread Pool                 │
-│  ViewState Assembly          │  Computation Engine          │
-│                              │  Atomic State                │
-├──────────────────────────────┴──────────────────────────────┤
-│                     cxx Bridge (FFI)                        │
-│         Type-safe bindings, no serialization overhead       │
-└─────────────────────────────────────────────────────────────┘
+
+### Core Components
+
+| Component | Description |
+|-----------|-------------|
+| **ETW Parsers** | Parse raw ETW events from 10+ providers (Kernel-Process, Kernel-File, AMSI, PowerShell, etc.) |
+| **Event Graph** | Lock-free graph structure correlating events by process hierarchy and causality |
+| **String Pool** | Deduplicated string storage with zero-copy access for paths, names, command lines |
+| **Arena Allocator** | Cache-aligned (64-byte) bump allocator for zero-allocation hot paths |
+| **Correlator** | Maps PIDs to process trees, tracks parent-child relationships across events |
+
+### Security Detections
+
+| Detection | Trigger |
+|-----------|---------|
+| Remote Thread Injection | Thread created in different process than creator |
+| RWX Memory | VirtualAlloc with PAGE_EXECUTE_READWRITE |
+| AMSI Bypass | Empty content scan from PowerShell |
+| Suspicious Scripts | IEX, EncodedCommand, download cradles, Mimikatz patterns |
+| DLL from Temp | Image loaded from %TEMP% or %APPDATA% |
+
+## Building
+
+### Requirements
+
+- Windows 10/11 (ETW requires Windows)
+- Visual Studio 2022+ with C++20 support
+- Rust 1.85+
+- CMake 3.20+
+
+### Build
+
+```bash
+# Clone
+git clone https://github.com/Muran-prog/ExeRay.git
+cd ExeRay
+
+# Build release
+cargo build --release
 ```
 
-### Design Principles
+### Run Tests
 
-| Principle | Implementation |
-|-----------|----------------|
-| Zero-copy | Raw pointer views with lifetime guarantees |
-| Lock-free | Atomic flags for status, SPSC queues for data |
-| Cache-friendly | 64-byte aligned arena allocator |
-| Single binary | Static linking with LTO |
-
----
+```bash
+# C++ unit tests (Windows)
+cmake -B build -G "Visual Studio 17 2022" -DBUILD_TESTING=ON
+cmake --build build --config Debug
+build\core\tests\Debug\exeray_unit_tests.exe
+```
 
 ## Project Structure
 
 ```
 ExeRay/
-├── Cargo.toml                    # Workspace configuration
-├── CMakeLists.txt                # Root CMake
-├── core/                         # C++ computational engine
-│   ├── CMakeLists.txt
+├── core/                    # C++ ETW engine
 │   ├── include/exeray/
-│   │   ├── types.hpp             # Status flags
-│   │   ├── arena.hpp             # Cache-aligned allocator
-│   │   ├── thread_pool.hpp       # Worker threads
-│   │   ├── engine.hpp            # Core computation
-│   │   └── ffi.hpp               # FFI handle
-│   └── src/
-│       └── stub.cpp
+│   │   ├── etw/             # ETW session, parsers
+│   │   ├── event/           # Event types, payloads
+│   │   ├── arena.hpp        # Lock-free allocator
+│   │   └── engine.hpp       # Main engine
+│   ├── src/etw/             # Parser implementations
+│   └── tests/unit/          # Google Test suite
 ├── crates/
-│   ├── exeray-ffi/               # Rust-C++ bridge
-│   │   ├── Cargo.toml
-│   │   ├── build.rs              # CMake + cxx integration
-│   │   └── src/
-│   │       └── lib.rs            # cxx::bridge definitions
-│   └── exeray/                   # Terminal UI
-│       ├── Cargo.toml
-│       └── src/
-│           ├── main.rs           # Entry point
-│           ├── app.rs            # Application state
-│           └── ui.rs             # Ratatui widgets
-└── .github/
-    └── workflows/
-        └── ci.yml                # Cross-platform CI
+│   ├── exeray-ffi/          # Rust-C++ bridge (cxx)
+│   └── exeray/              # Terminal UI (Ratatui)
+└── CMakeLists.txt
 ```
-
----
-
-## Requirements
-
-### Build Dependencies
-
-| Dependency | Version | Notes |
-|------------|---------|-------|
-| Rust | 1.85+ | Edition 2024 |
-| CMake | 3.20+ | For C++ core |
-| C++ Compiler | GCC 11+ / Clang 14+ / MSVC 2022 | C++20 support |
-
-### Platforms
-
-| Platform | Status |
-|----------|--------|
-| Linux (x86_64) | Supported |
-| macOS (x86_64, ARM64) | Supported |
-| Windows (x86_64) | Supported |
-
----
-
-## Building
-
-### Debug Build
-
-```bash
-cargo build
-```
-
-### Release Build
-
-```bash
-cargo build --release
-```
-
-The release build enables:
-- LTO (Link-Time Optimization)
-- Single codegen unit
-- Panic abort
-- Symbol stripping
-
-### Verify Build
-
-```bash
-cargo clippy -- -D warnings
-cargo test
-```
-
----
-
-## Usage
-
-### Running
-
-```bash
-./target/release/exeray
-```
-
-### Controls
-
-| Key | Action |
-|-----|--------|
-| `Space` | Start computation task |
-| `Q` / `Esc` | Quit |
-
-### UI Layout
-
-```
-┌─Engine──────────────────────────────────────────┐
-│ ExeRay │ Gen: 0 │ Threads: 8                    │
-└─────────────────────────────────────────────────┘
-┌─Progress────────────────────────────────────────┐
-│ ████████████████████░░░░░░░░░░░░░░░░░░░░░ 50%   │
-└─────────────────────────────────────────────────┘
-┌─Status──────────────────────────────────────────┐
-│ Running                                         │
-└─────────────────────────────────────────────────┘
-Space: Start │ Q: Quit
-```
-
----
-
-## FFI Design
-
-### Bridge Pattern
-
-The FFI layer uses [cxx](https://cxx.rs/) for type-safe bindings between Rust and C++.
-
-```rust
-#[cxx::bridge(namespace = "exeray")]
-mod ffi {
-    unsafe extern "C++" {
-        type Handle;
-
-        fn create(arena_mb: usize, threads: usize) -> UniquePtr<Handle>;
-        fn submit(self: Pin<&mut Handle>);
-        fn generation(self: &Handle) -> u64;
-        fn flags(self: &Handle) -> u64;
-        fn progress(self: &Handle) -> f32;
-    }
-}
-```
-
-### Type Ownership
-
-| Type | Owner | Access Pattern |
-|------|-------|----------------|
-| `Handle` | Rust (UniquePtr) | Exclusive |
-| `Engine` | C++ | Via Handle |
-| `Arena` | C++ | Internal |
-| `ViewState` | Rust | Assembled from accessors |
-
-### Memory Model
-
-- C++ allocates all computational buffers via arena
-- Rust receives primitive values (no pointer sharing for state)
-- No serialization overhead (direct function calls)
-
----
-
-## Performance
-
-### Binary Size
-
-| Build | Size |
-|-------|------|
-| Debug | ~15 MB |
-| Release | ~648 KB |
-
-### Compile-Time Optimizations
-
-```toml
-[profile.release]
-lto = "fat"           # Cross-crate optimization
-codegen-units = 1     # Better optimization
-panic = "abort"       # Smaller binary
-strip = true          # Remove symbols
-```
-
-### Runtime Characteristics
-
-| Metric | Target |
-|--------|--------|
-| FFI call overhead | < 10 ns |
-| State poll latency | < 1 μs |
-| Memory allocations (hot path) | 0 |
-
----
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
-
-Copyright (c) 2026 Muran-prog
+[MIT](LICENSE)
